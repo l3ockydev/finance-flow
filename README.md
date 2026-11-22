@@ -5,8 +5,6 @@
 Aplikasi desktop manajemen keuangan pribadi untuk Windows 10/11 (64-bit).
 A personal finance desktop app for Windows 10/11 (64-bit).
 
-![Tampilan utama FinFlow / FinFlow main window](docs/screenshot.png)
-
 ---
 
 <a id="bahasa-indonesia"></a>
@@ -77,7 +75,7 @@ projects\
 - Auto-save dilakukan dengan penulisan atomik (`*.ff.tmp` → `*.ff`).
 - **Backup cukup dengan menyalin folder `projects\`.**
 - Untuk pindah komputer, salin file `.ff` ke folder `projects\` di instalasi baru.
-- Demo awal dibuat otomatis jika folder `projects\` kosong.
+- Proyek **kosong** dibuat otomatis jika folder `projects\` kosong — tidak ada transaksi atau tagihan contoh.
 
 ### Fitur
 
@@ -213,7 +211,7 @@ projects\
 - Auto-save uses atomic writes (`*.ff.tmp` → `*.ff`).
 - **Back up simply by copying the `projects\` folder.**
 - To move computers, copy the `.ff` files into `projects\` of the new installation.
-- A demo project is seeded automatically when `projects\` is empty.
+- A **blank** project is created automatically when `projects\` is empty — no sample transactions or bills.
 
 ### Features
 

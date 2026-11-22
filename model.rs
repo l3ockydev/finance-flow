@@ -324,56 +324,6 @@ impl Project {
     }
 }
 
-/// A believable starter project so the dashboard is useful on first launch.
-fn demo_tx(
-    id: usize,
-    date: &str,
-    time: &str,
-    amount: f64,
-    category: &str,
-    account: &str,
-    note: &str,
-    kind: TxKind,
-) -> Transaction {
-    Transaction {
-        id: format!("trx_{}", id),
-        date: date.to_string(),
-        time: time.to_string(),
-        amount,
-        category: category.to_string(),
-        account: account.to_string(),
-        note: note.to_string(),
-        kind,
-        image: None,
-        image_mime: None,
-        image_name: None,
-    }
-}
-
-pub fn seed_demo() -> Project {
-    let mut p = Project::blank(1);
-    p.id = "proj_demo_keuangan_pribadi".to_string();
-    p.title = "Keuangan Pribadi".to_string();
-    p.owner = "Pengguna FinFlow".to_string();
-    p.created_at = today_iso();
-
-    let d = |offset: i64| shift_iso(&today_iso(), offset);
-    p.transactions.push(demo_tx(1, &d(-2), "08:30", 25_000_000.0, "Gaji & Bonus", "BCA Payroll", "Gaji Bulanan PT Teknologi Indonesia", TxKind::Income));
-    p.transactions.push(demo_tx(2, &d(-3), "19:45", 1_240_000.0, "Kebutuhan Pokok", "Kartu Mandiri Debit", "Superindo Mall Grand Galaxy", TxKind::Expense));
-    p.transactions.push(demo_tx(3, &d(-3), "12:15", 78_500.0, "Makanan & Minuman", "QRIS GoPay", "Kopi Kenangan & Toast", TxKind::Expense));
-    p.transactions.push(demo_tx(4, &d(-4), "07:50", 200_000.0, "Transportasi", "m-BCA", "Isi Saldo Tol Flazz BCA", TxKind::Expense));
-    p.transactions.push(demo_tx(5, &d(-5), "14:10", 3_500_000.0, "Investasi", "RDN Mandiri Sekuritas", "Dividen BBRI Q3 2026", TxKind::Income));
-    p.transactions.push(demo_tx(6, &d(-7), "11:20", 890_000.0, "Kebutuhan Pokok", "Kartu Mandiri Debit", "Belanja Bulanan Tokopedia", TxKind::Expense));
-    p.transactions.push(demo_tx(7, &d(-8), "09:05", 850_000.0, "Pajak & Tagihan", "BCA Prioritas", "Listrik Pasca PLN", TxKind::Expense));
-    p.transactions.push(demo_tx(8, &d(-10), "16:40", 3_500_000.0, "Pendapatan Sampingan", "BCA Prioritas", "Freelance UI Project", TxKind::Income));
-
-    p.bills.push(Bill { id: "bill_1".into(), name: "IndiHome Fiber 100M".into(), amount: 425_000.0, due_date: d(4), category: "Internet".into(), status: BillStatus::Pending, account: "BCA Prioritas".into() });
-    p.bills.push(Bill { id: "bill_2".into(), name: "Listrik Pasca PLN".into(), amount: 850_000.0, due_date: d(6), category: "Utilitas".into(), status: BillStatus::Pending, account: "BCA Prioritas".into() });
-    p.bills.push(Bill { id: "bill_3".into(), name: "Cicilan KPR BTN".into(), amount: 4_500_000.0, due_date: d(12), category: "Cicilan".into(), status: BillStatus::Scheduled, account: "Kartu Mandiri Debit".into() });
-    p.touch();
-    p
-}
-
 // ---------------------------------------------------------------------------
 // Currency & date helpers (Indonesian conventions)
 // ---------------------------------------------------------------------------

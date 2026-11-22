@@ -196,10 +196,12 @@ impl App {
         };
         app.load_projects();
         if app.projects.is_empty() {
-            let demo = seed_demo();
-            app.save_project(&demo);
-            app.current = Some(demo.id.clone());
-            app.projects.push(demo);
+            // Mulai dengan proyek kosong — tidak ada transaksi atau tagihan contoh.
+            let mut project = Project::blank(1);
+            project.title = "Keuangan Pribadi".to_string();
+            app.save_project(&project);
+            app.current = Some(project.id.clone());
+            app.projects.push(project);
         } else {
             app.projects.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
             app.current = Some(app.projects[0].id.clone());
