@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release
+        run: cargo build --release --locked
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target\release\finance_flow.exe dist\
+          Copy-Item README.md,LICENSE,update.ps1,update.json dist\
+          @{ repo = $env:GITHUB_REPOSITORY } | ConvertTo-Json -Compress | Set-Content dist\update.json -Encoding UTF8
+          Compress-Archive -Path dist\* -DestinationPath finance_flow-windows-x86_64.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finance_flow-windows-x86_64
+          path: finance_flow-windows-x86_64.zip
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: finance_flow-windows-x86_64.zip
+          generate_release_notes: true

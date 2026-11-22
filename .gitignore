@@ -1,0 +1,22 @@
+# Rust build output
+/target/
+**/target/
+
+# Runtime data & user financial files — jangan pernah di-commit
+/projects/*.ff
+/projects/*.ff.tmp
+*.ff
+*.ff.tmp
+
+# Binary / paket rilis (dibuat oleh CI, diunggah lewat Releases)
+*.exe
+*.zip
+/dist/
+
+# File sistem editor & OS
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.idea/
+.vscode/
