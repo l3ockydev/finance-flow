@@ -3,8 +3,8 @@
 **/target/
 
 # Runtime data & user financial files — jangan pernah di-commit
-/projects/*.ff
-/projects/*.ff.tmp
+/projects/
+**/projects/
 *.ff
 *.ff.tmp
 
