@@ -14,18 +14,18 @@ pub fn dim(ctx: &egui::Context) {
 fn modal_frame(tc: &ThemeColors) -> egui::Frame {
     egui::Frame::none()
         .fill(tc.surface)
-        .rounding(Rounding::same(16.0))
-        .stroke(Stroke::new(1.0, Color32::from_rgba_premultiplied(0x24, 0x24, 0x24, 0x24)))
-        .inner_margin(egui::Margin::same(24.0))
+        .rounding(Rounding::same(12.0))
+        .stroke(Stroke::new(1.0_f32, tc.border))
+        .inner_margin(egui::Margin::same(20.0))
 }
 
 fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading: &str, subtitle: &str, tc: &ThemeColors) -> bool {
     let mut close = false;
     ui.horizontal(|ui| {
-        icon_badge(ui, icon, fg, bg, 38.0);
+        icon_badge(ui, icon, fg, bg, 34.0);
         ui.add_space(2.0);
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new(heading).size(17.0).color(tc.white).strong());
+            ui.label(egui::RichText::new(heading).size(16.0).color(tc.white).strong());
             ui.label(egui::RichText::new(subtitle).size(10.5).color(tc.muted));
         });
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
@@ -34,12 +34,12 @@ fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading
             }
         });
     });
-    ui.add_space(14.0);
+    ui.add_space(12.0);
     close
 }
 
 fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
-    ui.label(egui::RichText::new("NOMINAL").size(10.0).color(tc.muted).strong());
+    ui.label(egui::RichText::new("NOMINAL").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(3.0);
     ui.horizontal(|ui| {
         egui::Frame::none()
@@ -61,7 +61,7 @@ fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
 }
 
 fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
-    ui.label(egui::RichText::new("KATEGORI").size(10.0).color(tc.muted).strong());
+    ui.label(egui::RichText::new("KATEGORI").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(3.0);
     egui::ComboBox::from_id_source(format!("cat_{}", value))
         .selected_text(value.clone())
@@ -74,7 +74,7 @@ fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: 
 }
 
 fn account_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
-    ui.label(egui::RichText::new("AKUN BANK").size(10.0).color(tc.muted).strong());
+    ui.label(egui::RichText::new("AKUN BANK").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(3.0);
     egui::ComboBox::from_id_source(format!("acc_{}", value))
         .selected_text(value.clone())
@@ -87,7 +87,7 @@ fn account_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &
 }
 
 fn date_field(ui: &mut egui::Ui, value: &mut String, tc: &ThemeColors) {
-    ui.label(egui::RichText::new("TANGGAL").size(10.0).color(tc.muted).strong());
+    ui.label(egui::RichText::new("TANGGAL").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(3.0);
     ui.add(
         egui::TextEdit::singleline(value)
@@ -99,7 +99,7 @@ fn date_field(ui: &mut egui::Ui, value: &mut String, tc: &ThemeColors) {
 
 fn evidence_row(ui: &mut egui::Ui, app: &mut App) {
     let tc = app.theme_colors;
-    ui.label(egui::RichText::new("BUKTI TRANSAKSI").size(10.0).color(tc.muted).strong());
+    ui.label(egui::RichText::new("BUKTI TRANSAKSI").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(3.0);
     ui.horizontal(|ui| {
         if secondary_button(ui, "Lampirkan Gambar", &tc).clicked() {
@@ -226,7 +226,7 @@ impl App {
                         &tc,
                     );
                     cols[1].add_space(8.0);
-                    cols[1].label(egui::RichText::new("WAKTU").size(10.0).color(tc.muted).strong());
+                    cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
                     cols[1].add_space(3.0);
                     cols[1].add(
                         egui::TextEdit::singleline(&mut self.form.time)
@@ -379,7 +379,7 @@ impl App {
                     egui::Frame::none()
                         .fill(if selected { tc.primary_soft } else { tc.surface_low })
                         .rounding(Rounding::same(10.0))
-                        .stroke(Stroke::new(1.0, if selected { tc.primary } else { tc.border }))
+                        .stroke(Stroke::new(1.0_f32, if selected { tc.primary } else { tc.border }))
                         .inner_margin(egui::Margin::symmetric(14.0, 10.0))
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
@@ -833,7 +833,7 @@ impl App {
                                 &tc
                             );
                             cols[1].add_space(8.0);
-                            cols[1].label(egui::RichText::new("WAKTU").size(10.0).color(tc.muted).strong());
+                            cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
                             cols[1].add_space(3.0);
                             cols[1].add(
                                 egui::TextEdit::singleline(&mut self.form.time)
@@ -876,7 +876,7 @@ impl App {
                                 &tc
                             );
                             cols[1].add_space(8.0);
-                            cols[1].label(egui::RichText::new("WAKTU").size(10.0).color(tc.muted).strong());
+                            cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
                             cols[1].add_space(3.0);
                             cols[1].add(
                                 egui::TextEdit::singleline(&mut self.form.time)

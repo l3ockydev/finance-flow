@@ -177,8 +177,8 @@ pub fn card<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R, tc: &The
 pub fn card_pad<R>(ui: &mut egui::Ui, pad: f32, add: impl FnOnce(&mut egui::Ui) -> R, tc: &ThemeColors) -> egui::InnerResponse<R> {
     egui::Frame::none()
         .fill(tc.surface)
-        .rounding(Rounding::same(16.0))
-        .stroke(Stroke::new(1.0_f32, tc.border))
+        .rounding(Rounding::same(12.0))
+        .stroke(Stroke::new(1.0_f32, tc.border_soft))
         .inner_margin(egui::Margin::same(pad))
         .show(ui, add)
 }
@@ -186,9 +186,9 @@ pub fn card_pad<R>(ui: &mut egui::Ui, pad: f32, add: impl FnOnce(&mut egui::Ui) 
 pub fn soft_panel<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R, tc: &ThemeColors) -> egui::InnerResponse<R> {
     egui::Frame::none()
         .fill(tc.surface_low)
-        .rounding(Rounding::same(12.0))
-        .stroke(Stroke::new(1.0_f32, tc.border_soft))
-        .inner_margin(egui::Margin::same(14.0))
+        .rounding(Rounding::same(10.0))
+        .stroke(Stroke::NONE)
+        .inner_margin(egui::Margin::symmetric(14.0, 12.0))
         .show(ui, add)
 }
 
@@ -203,13 +203,13 @@ pub fn divider(ui: &mut egui::Ui, tc: &ThemeColors) {
 // ---------------------------------------------------------------------------
 
 pub fn title(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(26.0).color(tc.white).strong());
+    ui.label(RichText::new(text).size(22.0).color(tc.white).strong());
 }
 
 pub fn section_title(ui: &mut egui::Ui, text: &str, subtitle: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(16.0).color(tc.white).strong());
+    ui.label(RichText::new(text).size(15.0).color(tc.white).strong());
     if !subtitle.is_empty() {
-        ui.add_space(1.0);
+        ui.add_space(2.0);
         ui.label(RichText::new(subtitle).size(11.0).color(tc.muted));
     }
 }
@@ -219,7 +219,7 @@ pub fn label(ui: &mut egui::Ui, text: &str, size: f32, color: Color32) {
 }
 
 pub fn overline(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(10.0).color(tc.muted).strong());
+    ui.label(RichText::new(text).size(10.5).color(tc.muted_dim).strong());
 }
 
 // ---------------------------------------------------------------------------
@@ -293,8 +293,8 @@ pub fn progress(ui: &mut egui::Ui, ratio: f32, color: Color32, tc: &ThemeColors)
 }
 
 pub fn field(ui: &mut egui::Ui, label_text: &str, value: &mut String, hint: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(label_text).size(11.0).color(tc.muted).strong());
-    ui.add_space(2.0);
+    ui.label(RichText::new(label_text).size(10.5).color(tc.muted_dim).strong());
+    ui.add_space(4.0);
     ui.add(
         egui::TextEdit::singleline(value)
             .hint_text(RichText::new(hint).color(tc.muted_dim))
@@ -322,7 +322,7 @@ pub fn icon_button(ui: &mut egui::Ui, icon: Icon, tooltip: &str, tc: &ThemeColor
 }
 
 pub fn sub_nav_item(ui: &mut egui::Ui, text: &str, selected: bool, tc: &ThemeColors) -> Response {
-    let height = 30.0;
+    let height = 28.0;
     let width = ui.available_width();
     let (rect, response) = ui.allocate_exact_size(Vec2::new(width, height), egui::Sense::click());
     let painter = ui.painter();
@@ -340,14 +340,14 @@ pub fn sub_nav_item(ui: &mut egui::Ui, text: &str, selected: bool, tc: &ThemeCol
         Pos2::new(rect.left() + 26.0, rect.center().y),
         egui::Align2::LEFT_CENTER,
         text,
-        FontId::proportional(12.0),
-        if selected { tc.primary_light } else { tc.muted },
+        FontId::proportional(11.5),
+        if selected { tc.primary_light } else { tc.text },
     );
     response
 }
 
 pub fn nav_item(ui: &mut egui::Ui, icon: Icon, text: &str, selected: bool, tc: &ThemeColors) -> Response {
-    let height = 40.0;
+    let height = 36.0;
     let width = ui.available_width();
     let (rect, response) = ui.allocate_exact_size(Vec2::new(width, height), egui::Sense::click());
     let painter = ui.painter();
@@ -357,12 +357,12 @@ pub fn nav_item(ui: &mut egui::Ui, icon: Icon, text: &str, selected: bool, tc: &
         painter.rect_filled(rect, Rounding::same(8.0), Color32::from_rgba_premultiplied(0x0d, 0x0d, 0x0d, 0x0d));
     }
     let color = if selected { tc.white } else { tc.text };
-    paint_icon(painter, Rect::from_center_size(Pos2::new(rect.left() + 20.0, rect.center().y), Vec2::splat(18.0)), color, icon, 1.6);
+    paint_icon(painter, Rect::from_center_size(Pos2::new(rect.left() + 18.0, rect.center().y), Vec2::splat(16.0)), color, icon, 1.6);
     painter.text(
-        Pos2::new(rect.left() + 38.0, rect.center().y),
+        Pos2::new(rect.left() + 34.0, rect.center().y),
         egui::Align2::LEFT_CENTER,
         text,
-        FontId::proportional(13.5),
+        FontId::proportional(12.5),
         color,
     );
     response
@@ -386,38 +386,38 @@ pub struct Metric<'a> {
 }
 
 pub fn metric_card(ui: &mut egui::Ui, metric: Metric<'_>, tc: &ThemeColors) {
-    card_pad(ui, 18.0, |ui| {
-        ui.set_min_height(112.0);
+    card_pad(ui, 16.0, |ui| {
+        ui.set_min_height(104.0);
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                ui.set_max_width(ui.available_width() - 52.0);
-                ui.label(RichText::new(metric.label).size(10.5).color(tc.muted).strong());
-                ui.add_space(6.0);
+                ui.set_max_width(ui.available_width() - 48.0);
+                ui.label(RichText::new(metric.label).size(10.5).color(tc.muted_dim).strong());
+                ui.add_space(5.0);
                 let avail_w = ui.available_width();
                 let text = metric.value;
-                let galley = ui.painter().layout_no_wrap(text.to_owned(), FontId::proportional(24.0), metric.accent);
+                let galley = ui.painter().layout_no_wrap(text.to_owned(), FontId::proportional(22.0), metric.accent);
                 let size = if galley.size().x > avail_w {
-                    24.0 * (avail_w / galley.size().x).max(0.55)
+                    22.0 * (avail_w / galley.size().x).max(0.55)
                 } else {
-                    24.0
+                    22.0
                 };
                 ui.label(RichText::new(text).size(size).color(metric.accent).strong());
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                icon_badge(ui, metric.icon, metric.icon_fg, metric.icon_bg, 40.0);
+                icon_badge(ui, metric.icon, metric.icon_fg, metric.icon_bg, 36.0);
             });
         });
-        ui.add_space(10.0);
+        ui.add_space(8.0);
         if let Some((ratio, color)) = metric.progress {
             progress(ui, ratio, color, tc);
             ui.add_space(6.0);
         }
         ui.horizontal(|ui| {
             if !metric.delta.is_empty() {
-                ui.label(RichText::new(metric.delta).size(11.0).color(metric.delta_color).strong());
+                ui.label(RichText::new(metric.delta).size(10.5).color(metric.delta_color).strong());
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(metric.footnote).size(11.0).color(tc.muted));
+                ui.label(RichText::new(metric.footnote).size(10.5).color(tc.muted));
             });
         });
     }, tc);
@@ -438,7 +438,9 @@ pub enum Icon {
     ArrowDown,
     ArrowUp,
     Bell,
+    #[allow(dead_code)]
     Shield,
+    #[allow(dead_code)]
     Plus,
     Download,
     Search,
@@ -447,16 +449,24 @@ pub enum Icon {
     Home,
     Bolt,
     Wifi,
+    #[allow(dead_code)]
     Filter,
     Doc,
     Trash,
     Edit,
+    #[allow(dead_code)]
     ChevronRight,
+    #[allow(dead_code)]
     ChevronLeft,
+    #[allow(dead_code)]
     Sync,
+    #[allow(dead_code)]
     Minus,
+    #[allow(dead_code)]
     Square,
+    #[allow(dead_code)]
     Close,
+    #[allow(dead_code)]
     User,
 }
 

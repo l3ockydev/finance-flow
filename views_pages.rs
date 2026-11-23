@@ -488,7 +488,7 @@ impl App {
             let center = Pos2::new(rect.center().x, rect.center().y + 4.0);
             let radius = 58.0;
             let painter = ui.painter();
-            painter.circle_stroke(center, radius, Stroke::new(14.0, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c)));
+            painter.circle_stroke(center, radius, Stroke::new(14.0_f32, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c)));
 
             let mut cats: Vec<(String, f64)> = Vec::new();
             for t in p.transactions.iter().filter(|t| t.kind == TxKind::Expense) {
@@ -925,5 +925,5 @@ fn draw_arc(painter: &egui::Painter, center: Pos2, radius: f32, start: f32, end:
         let a = start + (end - start) * i as f32 / steps as f32;
         points.push(Pos2::new(center.x + a.cos() * radius, center.y + a.sin() * radius));
     }
-    painter.add(egui::Shape::line(points, Stroke::new(14.0, color)));
+    painter.add(egui::Shape::line(points, Stroke::new(14.0_f32, color)));
 }

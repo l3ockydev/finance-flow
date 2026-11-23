@@ -631,23 +631,23 @@ impl App {
     fn top_bar(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::TopBottomPanel::top("finflow_top")
-            .exact_height(52.0)
+            .exact_height(48.0)
             .frame(
                 egui::Frame::none()
                     .fill(tc.surface_low)
-                    .stroke(Stroke::new(1.0, tc.border))
-                    .inner_margin(egui::Margin::symmetric(16.0, 10.0)),
+                    .stroke(Stroke::new(1.0_f32, tc.border_soft))
+                    .inner_margin(egui::Margin::symmetric(16.0, 8.0)),
             )
             .show(ctx, |ui| {
                 ui.horizontal_centered(|ui| {
                     if let Some(tex) = &self.logo_tex {
                         ui.add(
                             egui::Image::new(tex)
-                                .fit_to_exact_size(Vec2::splat(28.0))
-                                .rounding(Rounding::same(7.0)),
+                                .fit_to_exact_size(Vec2::splat(26.0))
+                                .rounding(Rounding::same(6.0)),
                         );
                     } else {
-                        let (logo, _) = ui.allocate_exact_size(Vec2::splat(28.0), Sense::hover());
+                        let (logo, _) = ui.allocate_exact_size(Vec2::splat(26.0), Sense::hover());
                         ui.painter().rect_filled(logo, Rounding::same(8.0), tc.primary);
                         ui.painter().text(
                             logo.center(),
@@ -658,8 +658,8 @@ impl App {
                         );
                     }
                     ui.add_space(8.0);
-                    ui.label(egui::RichText::new("FinFlow").size(15.0).color(tc.white).strong());
-                    ui.label(egui::RichText::new("— Keuangan Pribadi").size(10.5).color(tc.muted));
+                    ui.label(egui::RichText::new("FinFlow").size(14.5).color(tc.white).strong());
+                    ui.label(egui::RichText::new("— Keuangan Pribadi").size(10.0).color(tc.muted));
 
                     ui.add_space(18.0);
                     let (line, _) = ui.allocate_exact_size(Vec2::new(1.0, 20.0), Sense::hover());
@@ -722,21 +722,21 @@ impl App {
     fn sidebar(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::SidePanel::left("finflow_sidebar")
-            .exact_width(228.0)
+            .exact_width(212.0)
             .resizable(false)
             .frame(
                 egui::Frame::none()
                     .fill(tc.surface_low)
-                    .stroke(Stroke::new(1.0, tc.border))
-                    .inner_margin(egui::Margin::symmetric(14.0, 14.0)),
+                    .stroke(Stroke::new(1.0_f32, tc.border_soft))
+                    .inner_margin(egui::Margin::symmetric(12.0, 12.0)),
             )
             .show(ctx, |ui| {
                 overline(ui, "MENU UTAMA", &tc);
-                ui.add_space(6.0);
+                ui.add_space(8.0);
                 if nav_item(ui, Icon::Grid, "Dashboard", self.view == View::Dashboard, &tc).clicked() {
                     self.view = View::Dashboard;
                 }
-                ui.add_space(2.0);
+                ui.add_space(3.0);
                 if nav_item(ui, Icon::Receipt, "Buku Transaksi", self.view == View::Transactions, &tc).clicked() {
                     self.view = View::Transactions;
                     self.page = 0;
@@ -750,9 +750,9 @@ impl App {
                     self.view = View::Analysis;
                 }
 
-                ui.add_space(18.0);
-                divider(ui, &tc);
                 ui.add_space(14.0);
+                divider(ui, &tc);
+                ui.add_space(10.0);
                 overline(ui, "PREFERENSI", &tc);
                 ui.add_space(6.0);
                 let settings_selected = self.view == View::Settings;
@@ -764,7 +764,7 @@ impl App {
                 // Chevron indicator on the right of the settings entry.
                 let c = egui::Pos2::new(resp.rect.right() - 20.0, resp.rect.center().y);
                 let color = if settings_selected { tc.white } else { tc.muted };
-                let stroke = Stroke::new(1.5, color);
+                let stroke = Stroke::new(1.5_f32, color);
                 if self.settings_expanded {
                     ui.painter().line_segment(
                         [egui::Pos2::new(c.x - 4.5, c.y - 2.0), egui::Pos2::new(c.x, c.y + 2.5)],
@@ -794,7 +794,7 @@ impl App {
                         SettingsSection::Default,
                     ];
                     ui.scope(|ui| {
-                        ui.spacing_mut().item_spacing.y = 2.0;
+                        ui.spacing_mut().item_spacing.y = 3.0;
                         for section in sections {
                             let active = settings_selected && self.settings_section == section;
                             if sub_nav_item(ui, section.label(), active, &tc).clicked() {

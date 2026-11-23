@@ -598,7 +598,7 @@ pub fn export_pdf(project: &Project, path: &Path) -> io::Result<()> {
     let mut offsets: Vec<usize> = vec![0; 4 + page_count * 2];
     out.extend_from_slice(b"%PDF-1.4\n");
 
-    let mut push_obj = |out: &mut Vec<u8>, offsets: &mut Vec<usize>, number: usize, body: String| {
+    let push_obj = |out: &mut Vec<u8>, offsets: &mut Vec<usize>, number: usize, body: String| {
         offsets[number] = out.len();
         out.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", number, body).as_bytes());
     };

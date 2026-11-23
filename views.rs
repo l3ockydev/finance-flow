@@ -209,7 +209,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     // Divider
     painter.line_segment(
         [Pos2::new(row_rect.left(), row_rect.bottom()), Pos2::new(row_rect.right(), row_rect.bottom())],
-        Stroke::new(1.0, tc.border),
+        Stroke::new(1.0_f32, tc.border),
     );
     
     action
@@ -238,9 +238,9 @@ impl App {
             });
         });
 
-        ui.add_space(16.0);
+        ui.add_space(12.0);
 
-        let gap = 14.0;
+        let gap = 12.0;
         let width = ((ui.available_width() - gap * 3.0) / 4.0).floor().max(160.0);
         let (income, expense) = p.this_month_totals();
         let budget_total: f64 = p.budgets.iter().map(|b| b.limit).sum();
@@ -314,30 +314,30 @@ impl App {
                     ui.add_space(gap);
                 }
                 ui.allocate_ui_with_layout(
-                    Vec2::new(width, 148.0),
+                    Vec2::new(width, 136.0),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| metric_card(ui, metric, &tc),
                 );
             }
         });
 
-        ui.add_space(18.0);
+        ui.add_space(14.0);
 
         let total_w = ui.available_width();
-        let left_w = ((total_w - 16.0) * 0.635).floor();
-        let right_w = total_w - left_w - 16.0;
+        let left_w = ((total_w - 14.0) * 0.635).floor();
+        let right_w = total_w - left_w - 14.0;
         ui.horizontal_top(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            ui.allocate_ui_with_layout(Vec2::new(left_w, 340.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(left_w, 312.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 self.cashflow_card(ui, &p);
             });
-            ui.add_space(16.0);
-            ui.allocate_ui_with_layout(Vec2::new(right_w, 340.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.add_space(14.0);
+            ui.allocate_ui_with_layout(Vec2::new(right_w, 312.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 self.upcoming_bills_card(ui, &p);
             });
         });
 
-        ui.add_space(18.0);
+        ui.add_space(14.0);
 
         let tc = self.theme_colors;
         card(ui, |ui| {
@@ -416,12 +416,12 @@ impl App {
                 let y = base_y - chart_h * i as f32 / 3.0;
                 painter.line_segment(
                     [Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)],
-                    Stroke::new(1.0, Color32::from_rgba_premultiplied(0x0a, 0x0a, 0x0a, 0x0a)),
+                    Stroke::new(1.0_f32, Color32::from_rgba_premultiplied(0x0a, 0x0a, 0x0a, 0x0a)),
                 );
             }
             painter.line_segment(
                 [Pos2::new(rect.left(), base_y), Pos2::new(rect.right(), base_y)],
-                Stroke::new(1.0, tc.border),
+                Stroke::new(1.0_f32, tc.border),
             );
 
             let group_w = rect.width() / months.len() as f32;
