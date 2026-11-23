@@ -50,22 +50,15 @@ fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading
 fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
     ui.label(egui::RichText::new("NOMINAL").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(5.0);
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 8.0;
-        egui::Frame::none()
-            .fill(tc.surface_high)
-            .rounding(Rounding::same(10.0))
-            .stroke(Stroke::new(1.0_f32, tc.border_soft))
-            .inner_margin(egui::Margin::symmetric(12.0, 10.0))
-            .show(ui, |ui| {
+    egui::Frame::none()
+        .fill(tc.surface_high)
+        .rounding(Rounding::same(10.0))
+        .stroke(Stroke::new(1.0_f32, tc.border))
+        .inner_margin(egui::Margin::symmetric(12.0, 8.0))
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 ui.label(egui::RichText::new("Rp").size(13.0).color(tc.primary_light).strong());
-            });
-        egui::Frame::none()
-            .fill(tc.surface_high)
-            .rounding(Rounding::same(10.0))
-            .stroke(Stroke::new(1.0_f32, tc.border_soft))
-            .inner_margin(egui::Margin::symmetric(12.0, 8.0))
-            .show(ui, |ui| {
                 ui.add(
                     egui::TextEdit::singleline(amount)
                         .hint_text(RichText::new("0").color(tc.muted_dim))
@@ -75,7 +68,7 @@ fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
                         .margin(Vec2::ZERO),
                 );
             });
-    });
+        });
     ui.add_space(8.0);
 }
 
@@ -155,7 +148,7 @@ fn evidence_row(ui: &mut egui::Ui, app: &mut App) {
             }
             label(ui, app.form.image_name.as_deref().unwrap_or("Gambar terlampir"), 10.0, tc.income);
         } else {
-            label(ui, "Opsional â€” struk, invoice, atau screenshot", 10.0, tc.muted_dim);
+            label(ui, "Opsional — struk, invoice, atau screenshot", 10.0, tc.muted_dim);
         }
     });
 }
@@ -274,7 +267,7 @@ impl App {
                             egui::Button::new(egui::RichText::new(label_text).size(13.0).color(tc.white).strong())
                                 .fill(accent)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
@@ -500,7 +493,7 @@ impl App {
                 } else {
                     (tc.expense, tc.expense_soft, Icon::ArrowUp)
                 };
-                if modal_header(ui, icon, accent, soft, "Detail Transaksi", &format!("{} â€¢ {}", tx.kind.label(), format_date_long(&tx.date)), &tc) {
+                if modal_header(ui, icon, accent, soft, "Detail Transaksi", &format!("{} • {}", tx.kind.label(), format_date_long(&tx.date)), &tc) {
                     close = true;
                 }
                 ui.horizontal(|ui| {
@@ -655,7 +648,7 @@ impl App {
                             egui::Button::new(egui::RichText::new("Ya, Hapus").size(13.0).color(tc.white).strong())
                                 .fill(tc.expense)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
@@ -745,7 +738,7 @@ impl App {
                             egui::Button::new(egui::RichText::new("Hapus Proyek").size(13.0).color(tc.white).strong())
                                 .fill(tc.expense)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
@@ -791,15 +784,40 @@ impl App {
                     ];
                     for (t, label, fg, bg, icon) in tabs {
                         let selected = tab == t;
-                        let (rect, _) = ui.allocate_exact_size(Vec2::splat(20.0), egui::Sense::hover());
-                        let resp = ui
-                            .add(egui::Button::new({
-                                paint_icon(ui.painter(), rect.shrink(4.0), if selected { tc.white } else { fg }, icon, 1.2);
-                                egui::RichText::new(label).size(11.5).color(if selected { tc.white } else { fg }).strong()
-                            })
-                            .fill(if selected { fg } else { bg })
-                            .rounding(Rounding::same(8.0))
-                            .min_size(Vec2::new(110.0, 34.0)));
+                        let (rect, resp) =
+                            ui.allocate_exact_size(Vec2::new(150.0, 36.0), egui::Sense::click());
+                        let painter = ui.painter();
+                        let fill = if selected {
+                            fg
+                        } else if resp.hovered() {
+                            tc.surface_highest
+                        } else {
+                            bg
+                        };
+                        let stroke = if selected {
+                            Stroke::NONE
+                        } else {
+                            Stroke::new(1.0_f32, tc.border_soft)
+                        };
+                        painter.rect(rect, Rounding::same(10.0), fill, stroke);
+                        let icon_color = if selected { tc.white } else { fg };
+                        paint_icon(
+                            painter,
+                            egui::Rect::from_center_size(
+                                egui::Pos2::new(rect.left() + 20.0, rect.center().y),
+                                Vec2::splat(16.0),
+                            ),
+                            icon_color,
+                            icon,
+                            1.5,
+                        );
+                        painter.text(
+                            egui::Pos2::new(rect.left() + 36.0, rect.center().y),
+                            egui::Align2::LEFT_CENTER,
+                            label,
+                            egui::FontId::proportional(12.0),
+                            if selected { tc.white } else { tc.text },
+                        );
                         if resp.clicked() {
                             tab = t;
                             self.add_tx_tab = match t {
@@ -859,12 +877,12 @@ impl App {
                             );
                             cols[1].add_space(8.0);
                             cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
-                            cols[1].add_space(3.0);
+                            cols[1].add_space(5.0);
                             cols[1].add(
                                 egui::TextEdit::singleline(&mut self.form.time)
-                                    .hint_text("08:30")
+                                    .hint_text(RichText::new("08:30").color(tc.muted_dim))
                                     .desired_width(f32::INFINITY)
-                                    .margin(Vec2::new(10.0, 8.0)),
+                                    .margin(Vec2::new(12.0, 9.0)),
                             );
                         });
                         ui.add_space(10.0);
@@ -902,12 +920,12 @@ impl App {
                             );
                             cols[1].add_space(8.0);
                             cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
-                            cols[1].add_space(3.0);
+                            cols[1].add_space(5.0);
                             cols[1].add(
                                 egui::TextEdit::singleline(&mut self.form.time)
-                                    .hint_text("08:30")
+                                    .hint_text(RichText::new("08:30").color(tc.muted_dim))
                                     .desired_width(f32::INFINITY)
-                                    .margin(Vec2::new(10.0, 8.0)),
+                                    .margin(Vec2::new(12.0, 9.0)),
                             );
                         });
                         ui.add_space(10.0);
@@ -967,7 +985,7 @@ impl App {
                             egui::Button::new(egui::RichText::new(label_text).size(13.0).color(tc.white).strong())
                                 .fill(accent)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
