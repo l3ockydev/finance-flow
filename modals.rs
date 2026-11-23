@@ -8,7 +8,7 @@ use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
 
 pub fn dim(ctx: &egui::Context) {
     let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Middle, egui::Id::new("finflow_dim")));
-    painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(80));
+    painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(45));
 }
 
 fn modal_frame(tc: &ThemeColors) -> egui::Frame {
@@ -20,7 +20,7 @@ fn modal_frame(tc: &ThemeColors) -> egui::Frame {
             offset: egui::vec2(0.0, 18.0),
             blur: 48.0,
             spread: -10.0,
-            color: Color32::from_black_alpha(190),
+            color: Color32::from_black_alpha(90),
         })
         .inner_margin(egui::Margin::same(24.0))
 }
@@ -31,7 +31,7 @@ fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading
         icon_badge(ui, icon, fg, bg, 38.0);
         ui.add_space(6.0);
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new(heading).size(17.0).color(tc.white).strong());
+            ui.label(egui::RichText::new(heading).size(17.0).color(tc.text).strong());
             ui.add_space(2.0);
             ui.label(egui::RichText::new(subtitle).size(11.0).color(tc.muted));
         });

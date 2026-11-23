@@ -262,7 +262,7 @@ impl App {
                 metric_card(ui, Metric {
                     label: "TOTAL KEWAJIBAN",
                     value: &format_rp(pending + paid),
-                    accent: tc.white,
+                    accent: tc.text,
                     icon: Icon::Wallet,
                     icon_fg: tc.primary_light,
                     icon_bg: tc.primary_soft,
@@ -334,7 +334,7 @@ impl App {
                         ui.vertical(|ui| {
                             ui.set_width((ui.available_width() - 300.0).max(160.0));
                             ui.horizontal(|ui| {
-                                ui.label(egui::RichText::new(&bill.name).size(12.5).color(tc.white).strong());
+                                ui.label(egui::RichText::new(&bill.name).size(12.5).color(tc.text).strong());
                                 let (fg, bg) = match bill.status {
                                     BillStatus::Paid => (tc.income, tc.income_soft),
                                     BillStatus::Pending => (tc.warning, tc.warning_soft),
@@ -533,7 +533,7 @@ impl App {
                     start += sweep;
                 }
             }
-            painter.text(center + Vec2::new(0.0, -8.0), egui::Align2::CENTER_CENTER, format!("{:.0}%", ratio * 100.0), egui::FontId::proportional(26.0), tc.white);
+            painter.text(center + Vec2::new(0.0, -8.0), egui::Align2::CENTER_CENTER, format!("{:.0}%", ratio * 100.0), egui::FontId::proportional(26.0), tc.text);
             painter.text(center + Vec2::new(0.0, 16.0), egui::Align2::CENTER_CENTER, "Rasio Hemat", egui::FontId::proportional(9.5), tc.muted);
 
             ui.add_space(6.0);
@@ -911,7 +911,7 @@ impl App {
                         paint_icon(ui.painter(), rect.shrink(15.0), tc.primary_light, Icon::Doc, 1.6);
                     }
                     ui.add_space(12.0);
-                    ui.label(egui::RichText::new("Belum Ada Proyek").size(20.0).color(tc.white).strong());
+                    ui.label(egui::RichText::new("Belum Ada Proyek").size(20.0).color(tc.text).strong());
                     ui.add_space(4.0);
                     ui.label(egui::RichText::new("Setiap laporan keuangan disimpan sebagai file .ff terpisah, sehingga data antar proyek tidak pernah tercampur.").size(11.0).color(tc.muted));
                     ui.add_space(16.0);

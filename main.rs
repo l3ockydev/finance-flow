@@ -658,7 +658,7 @@ impl App {
                         );
                     }
                     ui.add_space(10.0);
-                    ui.label(egui::RichText::new("FinFlow").size(15.0).color(tc.white).strong());
+                    ui.label(egui::RichText::new("FinFlow").size(15.0).color(tc.text).strong());
                     ui.add_space(6.0);
                     ui.label(
                         egui::RichText::new("KEUANGAN PRIBADI")
@@ -790,7 +790,7 @@ impl App {
                 }
                 // Chevron indicator on the right of the settings entry.
                 let c = egui::Pos2::new(resp.rect.right() - 20.0, resp.rect.center().y);
-                let color = if settings_selected { tc.white } else { tc.muted };
+                let color = if settings_selected { tc.text } else { tc.muted };
                 let stroke = Stroke::new(1.5_f32, color);
                 if self.settings_expanded {
                     ui.painter().line_segment(
@@ -887,14 +887,14 @@ impl App {
             .anchor(egui::Align2::RIGHT_BOTTOM, Vec2::new(-22.0, -22.0))
             .show(ctx, |ui| {
                 egui::Frame::none()
-                    .fill(tc.surface_highest)
+                    .fill(tc.surface_high)
                     .rounding(Rounding::same(12.0))
                     .stroke(Stroke::new(1.0_f32, tc.border))
                     .shadow(egui::epaint::Shadow {
                         offset: egui::vec2(0.0, 8.0),
                         blur: 24.0,
                         spread: -6.0,
-                        color: Color32::from_black_alpha(150),
+                        color: Color32::from_black_alpha(70),
                     })
                     .inner_margin(egui::Margin::symmetric(16.0, 11.0))
                     .show(ui, |ui| {

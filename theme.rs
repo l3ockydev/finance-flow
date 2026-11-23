@@ -35,32 +35,32 @@ pub struct ThemeColors {
 
 impl ThemeColors {
     pub fn default() -> Self {
-        // Palet FinFlow: charcoal berlapis dari logo + aksen teal #0f5965.
-        // Dipilih untuk kontras teks >= 4.5:1 dan hierarki permukaan yang jelas.
+        // Tema terang: latar #DCDCDC sesuai permintaan, permukaan bertingkat
+        // ke putih, aksen teal tua, dan status warna dengan kontras >= 4.5:1.
         Self {
-            bg: Color32::from_rgb(0x12, 0x15, 0x16),
-            surface_low: Color32::from_rgb(0x17, 0x1b, 0x1c),
-            surface: Color32::from_rgb(0x1d, 0x22, 0x24),
-            surface_high: Color32::from_rgb(0x25, 0x2b, 0x2d),
-            surface_highest: Color32::from_rgb(0x2f, 0x36, 0x38),
-            primary: Color32::from_rgb(0x0f, 0x59, 0x65),
-            primary_hover: Color32::from_rgb(0x14, 0x78, 0x85),
-            primary_light: Color32::from_rgb(0x7a, 0xd3, 0xd9),
-            primary_soft: Color32::from_rgba_unmultiplied(0x0f, 0x59, 0x65, 0x61),
-            income: Color32::from_rgb(0x57, 0xcf, 0xa1),
-            income_dark: Color32::from_rgb(0x2f, 0x8f, 0x68),
-            income_soft: Color32::from_rgba_unmultiplied(0x57, 0xcf, 0xa1, 0x24),
-            expense: Color32::from_rgb(0xf0, 0x8a, 0x73),
-            expense_dark: Color32::from_rgb(0xc2, 0x5a, 0x44),
-            expense_soft: Color32::from_rgba_unmultiplied(0xf0, 0x8a, 0x73, 0x24),
-            warning: Color32::from_rgb(0xe3, 0xb1, 0x5a),
-            warning_soft: Color32::from_rgba_unmultiplied(0xe3, 0xb1, 0x5a, 0x24),
-            text: Color32::from_rgb(0xf4, 0xf7, 0xf7),
+            bg: Color32::from_rgb(0xdc, 0xdc, 0xdc),
+            surface_low: Color32::from_rgb(0xe6, 0xea, 0xea),
+            surface: Color32::from_rgb(0xf3, 0xf5, 0xf5),
+            surface_high: Color32::from_rgb(0xff, 0xff, 0xff),
+            surface_highest: Color32::from_rgb(0xe7, 0xec, 0xec),
+            primary: Color32::from_rgb(0x0e, 0x6b, 0x75),
+            primary_hover: Color32::from_rgb(0x0b, 0x78, 0x83),
+            primary_light: Color32::from_rgb(0x0b, 0x6e, 0x78),
+            primary_soft: Color32::from_rgba_unmultiplied(0x0e, 0x6b, 0x75, 0x18),
+            income: Color32::from_rgb(0x0b, 0x73, 0x53),
+            income_dark: Color32::from_rgb(0x07, 0x56, 0x3d),
+            income_soft: Color32::from_rgba_unmultiplied(0x0b, 0x73, 0x53, 0x18),
+            expense: Color32::from_rgb(0xa9, 0x47, 0x36),
+            expense_dark: Color32::from_rgb(0x7e, 0x2f, 0x23),
+            expense_soft: Color32::from_rgba_unmultiplied(0xa9, 0x47, 0x36, 0x16),
+            warning: Color32::from_rgb(0x8a, 0x5e, 0x12),
+            warning_soft: Color32::from_rgba_unmultiplied(0x8a, 0x5e, 0x12, 0x18),
+            text: Color32::from_rgb(0x12, 0x1a, 0x1c),
             white: Color32::from_rgb(0xff, 0xff, 0xff),
-            muted: Color32::from_rgb(0xaa, 0xb5, 0xb7),
-            muted_dim: Color32::from_rgb(0x8b, 0x99, 0x9c),
-            border: Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x14),
-            border_soft: Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x0a),
+            muted: Color32::from_rgb(0x41, 0x52, 0x54),
+            muted_dim: Color32::from_rgb(0x52, 0x61, 0x64),
+            border: Color32::from_rgba_unmultiplied(0x0b, 0x1a, 0x1d, 0x24),
+            border_soft: Color32::from_rgba_unmultiplied(0x0b, 0x1a, 0x1d, 0x14),
         }
     }
 
@@ -85,11 +85,11 @@ pub fn install(ctx: &egui::Context, colors: &ThemeColors) {
     }
     ctx.set_fonts(fonts);
 
-    let mut visuals = egui::Visuals::dark();
+    let mut visuals = egui::Visuals::light();
     visuals.panel_fill = colors.bg;
     visuals.window_fill = colors.surface;
-    visuals.extreme_bg_color = colors.surface_low;
-    visuals.faint_bg_color = Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x04);
+    visuals.extreme_bg_color = colors.surface_high;
+    visuals.faint_bg_color = Color32::from_rgba_unmultiplied(0x0b, 0x1a, 0x1d, 0x06);
     visuals.override_text_color = Some(colors.text);
     visuals.hyperlink_color = colors.primary_light;
     visuals.selection.bg_fill = colors.primary_soft;
@@ -97,32 +97,37 @@ pub fn install(ctx: &egui::Context, colors: &ThemeColors) {
     visuals.window_rounding = Rounding::same(16.0);
     visuals.menu_rounding = Rounding::same(10.0);
     visuals.window_shadow = egui::epaint::Shadow {
-        offset: egui::vec2(0.0, 10.0),
-        blur: 30.0,
-        spread: -4.0,
-        color: Color32::from_black_alpha(150),
+        offset: egui::vec2(0.0, 8.0),
+        blur: 24.0,
+        spread: -6.0,
+        color: Color32::from_black_alpha(70),
     };
     visuals.popup_shadow = visuals.window_shadow;
 
     let w = &mut visuals.widgets;
     w.noninteractive.bg_fill = colors.surface;
     w.noninteractive.bg_stroke = Stroke::new(1.0_f32, colors.border_soft);
+    w.noninteractive.fg_stroke.color = colors.text;
     w.noninteractive.rounding = Rounding::same(8.0);
     w.inactive.bg_fill = colors.surface_high;
     w.inactive.weak_bg_fill = colors.surface_high;
-    w.inactive.bg_stroke = Stroke::new(1.0_f32, colors.border_soft);
+    w.inactive.bg_stroke = Stroke::new(1.0_f32, colors.border);
+    w.inactive.fg_stroke.color = colors.text;
     w.inactive.rounding = Rounding::same(9.0);
     w.hovered.bg_fill = colors.surface_highest;
     w.hovered.weak_bg_fill = colors.surface_highest;
     w.hovered.bg_stroke = Stroke::new(1.0_f32, colors.border);
+    w.hovered.fg_stroke.color = colors.text;
     w.hovered.rounding = Rounding::same(9.0);
     w.active.bg_fill = colors.primary;
     w.active.weak_bg_fill = colors.primary;
-    w.active.bg_stroke = Stroke::new(1.0_f32, colors.primary_light);
+    w.active.bg_stroke = Stroke::new(1.0_f32, colors.primary_hover);
+    w.active.fg_stroke.color = colors.white;
     w.active.rounding = Rounding::same(9.0);
-    w.open.bg_fill = colors.surface_highest;
-    w.open.weak_bg_fill = colors.surface_highest;
+    w.open.bg_fill = colors.surface_high;
+    w.open.weak_bg_fill = colors.surface_high;
     w.open.bg_stroke = Stroke::new(1.0_f32, colors.border);
+    w.open.fg_stroke.color = colors.text;
     ctx.set_visuals(visuals);
 
     let mut style = (*ctx.style()).clone();
@@ -190,7 +195,7 @@ pub fn card_pad<R>(ui: &mut egui::Ui, pad: f32, add: impl FnOnce(&mut egui::Ui) 
             offset: egui::vec2(0.0, 4.0),
             blur: 14.0,
             spread: -6.0,
-            color: Color32::from_black_alpha(110),
+            color: Color32::from_black_alpha(48),
         })
         .inner_margin(egui::Margin::same(pad))
         .show(ui, add);
@@ -202,7 +207,7 @@ pub fn card_pad<R>(ui: &mut egui::Ui, pad: f32, add: impl FnOnce(&mut egui::Ui) 
             Pos2::new(r.left() + 14.0, r.top() + 0.5),
             Pos2::new(r.right() - 14.0, r.top() + 0.5),
         ],
-        Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x10)),
+        Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0xc0)),
     );
     response
 }
@@ -227,7 +232,7 @@ pub fn divider(ui: &mut egui::Ui, tc: &ThemeColors) {
 // ---------------------------------------------------------------------------
 
 pub fn title(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(26.0).color(tc.white).strong());
+    ui.label(RichText::new(text).size(26.0).color(tc.text).strong());
 }
 
 pub fn page_heading(ui: &mut egui::Ui, eyebrow: &str, heading: &str, subtitle: &str, tc: &ThemeColors) {
@@ -241,7 +246,7 @@ pub fn page_heading(ui: &mut egui::Ui, eyebrow: &str, heading: &str, subtitle: &
 }
 
 pub fn section_title(ui: &mut egui::Ui, text: &str, subtitle: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(15.0).color(tc.white).strong());
+    ui.label(RichText::new(text).size(15.0).color(tc.text).strong());
     if !subtitle.is_empty() {
         ui.add_space(3.0);
         ui.label(RichText::new(subtitle).size(11.5).color(tc.muted));
@@ -267,7 +272,7 @@ pub fn primary_button(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) -> Respon
             v.bg_fill = tc.primary;
             v.weak_bg_fill = tc.primary;
             v.rounding = Rounding::same(10.0);
-            v.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x18));
+            v.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x30));
         }
         w.hovered.bg_fill = tc.primary_hover;
         w.active.bg_fill = tc.primary_hover;
@@ -305,9 +310,9 @@ pub fn ghost_button(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) -> Response
         w.inactive.bg_fill = Color32::TRANSPARENT;
         w.inactive.bg_stroke = Stroke::NONE;
         w.hovered.bg_fill = tc.surface_high;
-        w.hovered.bg_stroke = Stroke::NONE;
+        w.hovered.bg_stroke = Stroke::new(1.0_f32, tc.border_soft);
         w.active.bg_fill = tc.surface_high;
-        w.active.bg_stroke = Stroke::NONE;
+        w.active.bg_stroke = Stroke::new(1.0_f32, tc.border_soft);
         for v in [&mut w.inactive, &mut w.hovered, &mut w.active] {
             v.rounding = Rounding::same(8.0);
         }
@@ -413,7 +418,7 @@ pub fn search_box(
     .inner
 }
 
-/// Scope that makes a stock `ComboBox` use FinFlow's dark surface tokens.
+/// Scope that makes a stock `ComboBox` use FinFlow's light surface tokens.
 pub fn styled_combo_scope<R>(ui: &mut egui::Ui, tc: &ThemeColors, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
     ui.scope(|ui| {
         let w = &mut ui.visuals_mut().widgets;
@@ -441,12 +446,12 @@ pub fn icon_badge(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, size:
 
 pub fn icon_button(ui: &mut egui::Ui, icon: Icon, tooltip: &str, tc: &ThemeColors) -> Response {
     let (rect, response) = ui.allocate_exact_size(Vec2::splat(32.0), egui::Sense::click());
-    let color = if response.hovered() { tc.white } else { tc.muted };
+    let color = if response.hovered() { tc.text } else { tc.muted };
     if response.hovered() {
         ui.painter().rect_filled(
             rect,
             Rounding::same(8.0),
-            Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x10),
+            Color32::from_rgba_unmultiplied(0x0b, 0x1a, 0x1d, 0x0f),
         );
     }
     paint_icon(ui.painter(), rect.shrink(8.0), color, icon, 1.5);
@@ -469,7 +474,7 @@ pub fn sub_nav_item(ui: &mut egui::Ui, text: &str, selected: bool, tc: &ThemeCol
         painter.rect_filled(
             rect,
             Rounding::same(8.0),
-            Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x08),
+            Color32::from_rgba_unmultiplied(0x0b, 0x1a, 0x1d, 0x0a),
         );
     }
     painter.text(
@@ -498,10 +503,10 @@ pub fn nav_item(ui: &mut egui::Ui, icon: Icon, text: &str, selected: bool, tc: &
         painter.rect_filled(
             rect,
             Rounding::same(10.0),
-            Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x08),
+            Color32::from_rgba_unmultiplied(0x0b, 0x1a, 0x1d, 0x0a),
         );
     }
-    let color = if selected { tc.white } else { tc.muted };
+    let color = if selected { tc.text } else { tc.muted };
     paint_icon(
         painter,
         Rect::from_center_size(Pos2::new(rect.left() + 20.0, rect.center().y), Vec2::splat(16.0)),
@@ -545,7 +550,7 @@ pub fn metric_card(ui: &mut egui::Ui, metric: Metric<'_>, tc: &ThemeColors) {
             offset: egui::vec2(0.0, 4.0),
             blur: 14.0,
             spread: -6.0,
-            color: Color32::from_black_alpha(110),
+            color: Color32::from_black_alpha(48),
         })
         .inner_margin(egui::Margin::same(16.0))
         .show(ui, |ui| {
@@ -878,11 +883,11 @@ pub fn paint_icon(painter: &egui::Painter, rect: Rect, color: Color32, icon: Ico
 pub fn category_color(category: &str, tc: &ThemeColors) -> Color32 {
     match category {
         "Gaji & Bonus" | "Pendapatan Sampingan" => tc.income,
-        "Investasi" => Color32::from_rgb(0xc4, 0xb5, 0xfd),
+        "Investasi" => Color32::from_rgb(0x6d, 0x4f, 0xb5),
         "Kebutuhan Pokok" => tc.primary_light,
-        "Transportasi" => Color32::from_rgb(0x67, 0xe8, 0xf9),
-        "Makanan & Minuman" => Color32::from_rgb(0xf9, 0xa8, 0xd4),
-        "Hiburan" => Color32::from_rgb(0xd8, 0xb4, 0xfe),
+        "Transportasi" => Color32::from_rgb(0x1c, 0x6a, 0xa8),
+        "Makanan & Minuman" => Color32::from_rgb(0xb2, 0x47, 0x7a),
+        "Hiburan" => Color32::from_rgb(0x7a, 0x52, 0xa8),
         "Pajak & Tagihan" | "Utilitas" => tc.warning,
         _ => tc.muted,
     }
@@ -890,5 +895,5 @@ pub fn category_color(category: &str, tc: &ThemeColors) -> Color32 {
 
 pub fn category_bg(category: &str, tc: &ThemeColors) -> Color32 {
     let c = category_color(category, &tc);
-    Color32::from_rgba_premultiplied(c.r() / 6, c.g() / 6, c.b() / 6, 0x50)
+    Color32::from_rgba_unmultiplied(c.r(), c.g(), c.b(), 0x18)
 }

@@ -120,7 +120,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     // DESKRIPSI & REKENING
     let desc_rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(cols.desc, row_h));
     // Note text
-    let note_galley = painter.layout_no_wrap(tx.note.clone(), FontId::proportional(12.5), tc.white);
+    let note_galley = painter.layout_no_wrap(tx.note.clone(), FontId::proportional(12.5), tc.text);
     let note_x = desc_rect.left() + 2.0;
     let note_y = desc_rect.top() + 6.0;
     let note_rect = Rect::from_min_size(Pos2::new(note_x, note_y), note_galley.size());
@@ -128,7 +128,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     if note_resp.clicked() {
         action = RowAction::Open(tx.id.clone());
     }
-    painter.galley(Pos2::new(note_x, note_y), note_galley, tc.white);
+    painter.galley(Pos2::new(note_x, note_y), note_galley, tc.text);
     // Account/sub text
     let sub = if tx.image.is_some() {
         format!("{}  •  Bukti terlampir", tx.account)
@@ -186,7 +186,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
         if edit_resp.hovered() {
             painter.rect_filled(edit_rect, Rounding::same(7.0), tc.surface_high);
         }
-        paint_icon(painter, edit_rect.shrink(9.0), if edit_resp.hovered() { tc.white } else { tc.muted }, Icon::Edit, 1.5);
+        paint_icon(painter, edit_rect.shrink(9.0), if edit_resp.hovered() { tc.text } else { tc.muted }, Icon::Edit, 1.5);
         if edit_resp.clicked() {
             action = RowAction::Edit(tx.id.clone());
         }
@@ -265,7 +265,7 @@ impl App {
             Metric {
                 label: "SALDO SAAT INI",
                 value: &balance_txt,
-                accent: tc.white,
+                accent: tc.text,
                 icon: Icon::Wallet,
                 icon_fg: tc.primary_light,
                 icon_bg: tc.primary_soft,
@@ -301,7 +301,7 @@ impl App {
             Metric {
                 label: "TAGIHAN MENUNGGU BAYAR",
                 value: &pending_txt,
-                accent: tc.white,
+                accent: tc.text,
                 icon: Icon::Bell,
                 icon_fg: tc.warning,
                 icon_bg: tc.warning_soft,
