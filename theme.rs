@@ -35,32 +35,32 @@ pub struct ThemeColors {
 
 impl ThemeColors {
     pub fn default() -> Self {
-        // Palet default mengikuti logo FinFlow: abu gelap #2a2a2a,
-        // aksen teal #0f5965, dan navy #202f3a.
+        // Palet FinFlow: charcoal berlapis dari logo + aksen teal #0f5965.
+        // Dipilih untuk kontras teks >= 4.5:1 dan hierarki permukaan yang jelas.
         Self {
-            bg: Color32::from_rgb(0x20, 0x21, 0x23),
-            surface_low: Color32::from_rgb(0x26, 0x27, 0x29),
-            surface: Color32::from_rgb(0x2a, 0x2a, 0x2a),
-            surface_high: Color32::from_rgb(0x33, 0x34, 0x36),
-            surface_highest: Color32::from_rgb(0x3d, 0x3e, 0x40),
+            bg: Color32::from_rgb(0x12, 0x15, 0x16),
+            surface_low: Color32::from_rgb(0x17, 0x1b, 0x1c),
+            surface: Color32::from_rgb(0x1d, 0x22, 0x24),
+            surface_high: Color32::from_rgb(0x25, 0x2b, 0x2d),
+            surface_highest: Color32::from_rgb(0x2f, 0x36, 0x38),
             primary: Color32::from_rgb(0x0f, 0x59, 0x65),
-            primary_hover: Color32::from_rgb(0x14, 0x70, 0x7e),
-            primary_light: Color32::from_rgb(0x7a, 0xcb, 0xd4),
-            primary_soft: Color32::from_rgba_premultiplied(0x0f, 0x59, 0x65, 0x60),
-            income: Color32::from_rgb(0x5e, 0xc9, 0x9a),
+            primary_hover: Color32::from_rgb(0x14, 0x78, 0x85),
+            primary_light: Color32::from_rgb(0x7a, 0xd3, 0xd9),
+            primary_soft: Color32::from_rgba_unmultiplied(0x0f, 0x59, 0x65, 0x61),
+            income: Color32::from_rgb(0x57, 0xcf, 0xa1),
             income_dark: Color32::from_rgb(0x2f, 0x8f, 0x68),
-            income_soft: Color32::from_rgba_premultiplied(0x5e, 0xc9, 0x9a, 0x30),
-            expense: Color32::from_rgb(0xe8, 0x83, 0x6b),
+            income_soft: Color32::from_rgba_unmultiplied(0x57, 0xcf, 0xa1, 0x24),
+            expense: Color32::from_rgb(0xf0, 0x8a, 0x73),
             expense_dark: Color32::from_rgb(0xc2, 0x5a, 0x44),
-            expense_soft: Color32::from_rgba_premultiplied(0xe8, 0x83, 0x6b, 0x30),
-            warning: Color32::from_rgb(0xd9, 0xa4, 0x41),
-            warning_soft: Color32::from_rgba_premultiplied(0xd9, 0xa4, 0x41, 0x30),
-            text: Color32::from_rgb(0xf2, 0xf4, 0xf5),
+            expense_soft: Color32::from_rgba_unmultiplied(0xf0, 0x8a, 0x73, 0x24),
+            warning: Color32::from_rgb(0xe3, 0xb1, 0x5a),
+            warning_soft: Color32::from_rgba_unmultiplied(0xe3, 0xb1, 0x5a, 0x24),
+            text: Color32::from_rgb(0xf4, 0xf7, 0xf7),
             white: Color32::from_rgb(0xff, 0xff, 0xff),
-            muted: Color32::from_rgb(0xa8, 0xb0, 0xb2),
-            muted_dim: Color32::from_rgb(0x74, 0x7c, 0x7e),
-            border: Color32::from_rgba_premultiplied(0xff, 0xff, 0xff, 0x12),
-            border_soft: Color32::from_rgba_premultiplied(0xff, 0xff, 0xff, 0x08),
+            muted: Color32::from_rgb(0xaa, 0xb5, 0xb7),
+            muted_dim: Color32::from_rgb(0x8b, 0x99, 0x9c),
+            border: Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x14),
+            border_soft: Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x0a),
         }
     }
 
@@ -71,13 +71,17 @@ impl ThemeColors {
 // ---------------------------------------------------------------------------
 
 pub fn install(ctx: &egui::Context, colors: &ThemeColors) {
+    // Satu keluarga font untuk gesam UI; angka memakai family yang sama agar
+    // rata tanpa mencampur font monospace asing.
     let mut fonts = egui::FontDefinitions::default();
     fonts.font_data.insert(
         "plus_jakarta".to_owned(),
         egui::FontData::from_static(include_bytes!("assets/PlusJakartaSans.ttf")),
     );
-    if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
-        family.insert(0, "plus_jakarta".to_owned());
+    for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+        if let Some(list) = fonts.families.get_mut(&family) {
+            list.insert(0, "plus_jakarta".to_owned());
+        }
     }
     ctx.set_fonts(fonts);
 
@@ -85,42 +89,45 @@ pub fn install(ctx: &egui::Context, colors: &ThemeColors) {
     visuals.panel_fill = colors.bg;
     visuals.window_fill = colors.surface;
     visuals.extreme_bg_color = colors.surface_low;
-    visuals.faint_bg_color = Color32::from_rgba_premultiplied(0x04, 0x04, 0x04, 0x04);
+    visuals.faint_bg_color = Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x04);
     visuals.override_text_color = Some(colors.text);
+    visuals.hyperlink_color = colors.primary_light;
     visuals.selection.bg_fill = colors.primary_soft;
     visuals.selection.stroke = Stroke::new(1.0_f32, colors.primary_light);
-    visuals.window_rounding = Rounding::same(14.0);
+    visuals.window_rounding = Rounding::same(16.0);
+    visuals.menu_rounding = Rounding::same(10.0);
     visuals.window_shadow = egui::epaint::Shadow {
-        offset: egui::vec2(0.0, 8.0),
-        blur: 24.0,
-        spread: 0.0,
-        color: Color32::from_black_alpha(140),
+        offset: egui::vec2(0.0, 10.0),
+        blur: 30.0,
+        spread: -4.0,
+        color: Color32::from_black_alpha(150),
     };
     visuals.popup_shadow = visuals.window_shadow;
 
     let w = &mut visuals.widgets;
     w.noninteractive.bg_fill = colors.surface;
-    w.noninteractive.bg_stroke = Stroke::new(1.0_f32, colors.border);
+    w.noninteractive.bg_stroke = Stroke::new(1.0_f32, colors.border_soft);
     w.noninteractive.rounding = Rounding::same(8.0);
     w.inactive.bg_fill = colors.surface_high;
     w.inactive.weak_bg_fill = colors.surface_high;
-    w.inactive.bg_stroke = Stroke::new(1.0_f32, colors.border);
-    w.inactive.rounding = Rounding::same(8.0);
+    w.inactive.bg_stroke = Stroke::new(1.0_f32, colors.border_soft);
+    w.inactive.rounding = Rounding::same(9.0);
     w.hovered.bg_fill = colors.surface_highest;
     w.hovered.weak_bg_fill = colors.surface_highest;
-    w.hovered.bg_stroke = Stroke::new(1.0_f32, colors.border_soft);
-    w.hovered.rounding = Rounding::same(8.0);
+    w.hovered.bg_stroke = Stroke::new(1.0_f32, colors.border);
+    w.hovered.rounding = Rounding::same(9.0);
     w.active.bg_fill = colors.primary;
     w.active.weak_bg_fill = colors.primary;
     w.active.bg_stroke = Stroke::new(1.0_f32, colors.primary_light);
-    w.active.rounding = Rounding::same(8.0);
+    w.active.rounding = Rounding::same(9.0);
     w.open.bg_fill = colors.surface_highest;
     w.open.weak_bg_fill = colors.surface_highest;
+    w.open.bg_stroke = Stroke::new(1.0_f32, colors.border);
     ctx.set_visuals(visuals);
 
     let mut style = (*ctx.style()).clone();
     style.text_styles = [
-        (egui::TextStyle::Heading, FontId::new(24.0, egui::FontFamily::Proportional)),
+        (egui::TextStyle::Heading, FontId::new(28.0, egui::FontFamily::Proportional)),
         (egui::TextStyle::Body, FontId::new(14.0, egui::FontFamily::Proportional)),
         (egui::TextStyle::Monospace, FontId::new(13.0, egui::FontFamily::Monospace)),
         (egui::TextStyle::Button, FontId::new(13.0, egui::FontFamily::Proportional)),
@@ -128,9 +135,9 @@ pub fn install(ctx: &egui::Context, colors: &ThemeColors) {
     ]
     .into();
     style.spacing.item_spacing = Vec2::new(8.0, 8.0);
-    style.spacing.button_padding = Vec2::new(12.0, 6.0);
-    style.spacing.menu_margin = egui::Margin::same(6.0);
-    style.visuals.window_rounding = Rounding::same(14.0);
+    style.spacing.button_padding = Vec2::new(14.0, 7.0);
+    style.spacing.menu_margin = egui::Margin::same(8.0);
+    style.spacing.scroll.bar_width = 10.0;
     ctx.set_style(style);
 }
 
@@ -171,31 +178,48 @@ pub fn logo_texture(ctx: &egui::Context) -> egui::TextureHandle {
 // ---------------------------------------------------------------------------
 
 pub fn card<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R, tc: &ThemeColors) -> egui::InnerResponse<R> {
-    card_pad(ui, 20.0, add, tc)
+    card_pad(ui, 18.0, add, tc)
 }
 
 pub fn card_pad<R>(ui: &mut egui::Ui, pad: f32, add: impl FnOnce(&mut egui::Ui) -> R, tc: &ThemeColors) -> egui::InnerResponse<R> {
-    egui::Frame::none()
+    let response = egui::Frame::none()
         .fill(tc.surface)
-        .rounding(Rounding::same(12.0))
+        .rounding(Rounding::same(14.0))
         .stroke(Stroke::new(1.0_f32, tc.border_soft))
+        .shadow(egui::epaint::Shadow {
+            offset: egui::vec2(0.0, 4.0),
+            blur: 14.0,
+            spread: -6.0,
+            color: Color32::from_black_alpha(110),
+        })
         .inner_margin(egui::Margin::same(pad))
-        .show(ui, add)
+        .show(ui, add);
+
+    // Garis cahaya tipis di atas kartu memberi kesan layered tanpa blur mahal.
+    let r = response.response.rect;
+    ui.painter().line_segment(
+        [
+            Pos2::new(r.left() + 14.0, r.top() + 0.5),
+            Pos2::new(r.right() - 14.0, r.top() + 0.5),
+        ],
+        Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x10)),
+    );
+    response
 }
 
 pub fn soft_panel<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R, tc: &ThemeColors) -> egui::InnerResponse<R> {
     egui::Frame::none()
-        .fill(tc.surface_low)
+        .fill(tc.surface_high)
         .rounding(Rounding::same(10.0))
-        .stroke(Stroke::NONE)
-        .inner_margin(egui::Margin::symmetric(14.0, 12.0))
+        .stroke(Stroke::new(1.0_f32, tc.border_soft))
+        .inner_margin(egui::Margin::symmetric(14.0, 11.0))
         .show(ui, add)
 }
 
 pub fn divider(ui: &mut egui::Ui, tc: &ThemeColors) {
     let width = ui.available_width();
     let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 1.0), egui::Sense::hover());
-    ui.painter().rect_filled(rect, Rounding::ZERO, tc.border);
+    ui.painter().rect_filled(rect, Rounding::ZERO, tc.border_soft);
 }
 
 // ---------------------------------------------------------------------------
@@ -203,14 +227,24 @@ pub fn divider(ui: &mut egui::Ui, tc: &ThemeColors) {
 // ---------------------------------------------------------------------------
 
 pub fn title(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(22.0).color(tc.white).strong());
+    ui.label(RichText::new(text).size(26.0).color(tc.white).strong());
+}
+
+pub fn page_heading(ui: &mut egui::Ui, eyebrow: &str, heading: &str, subtitle: &str, tc: &ThemeColors) {
+    ui.label(RichText::new(eyebrow.to_uppercase()).size(10.0).color(tc.primary_light).strong());
+    ui.add_space(4.0);
+    title(ui, heading, tc);
+    if !subtitle.is_empty() {
+        ui.add_space(4.0);
+        label(ui, subtitle, 12.0, tc.muted);
+    }
 }
 
 pub fn section_title(ui: &mut egui::Ui, text: &str, subtitle: &str, tc: &ThemeColors) {
     ui.label(RichText::new(text).size(15.0).color(tc.white).strong());
     if !subtitle.is_empty() {
-        ui.add_space(2.0);
-        ui.label(RichText::new(subtitle).size(11.0).color(tc.muted));
+        ui.add_space(3.0);
+        ui.label(RichText::new(subtitle).size(11.5).color(tc.muted));
     }
 }
 
@@ -219,7 +253,7 @@ pub fn label(ui: &mut egui::Ui, text: &str, size: f32, color: Color32) {
 }
 
 pub fn overline(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
-    ui.label(RichText::new(text).size(10.5).color(tc.muted_dim).strong());
+    ui.label(RichText::new(text.to_uppercase()).size(10.0).color(tc.muted_dim).strong());
 }
 
 // ---------------------------------------------------------------------------
@@ -227,55 +261,94 @@ pub fn overline(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
 // ---------------------------------------------------------------------------
 
 pub fn primary_button(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) -> Response {
-    ui.add(
-        egui::Button::new(RichText::new(text).size(13.0).color(tc.white).strong())
-            .fill(tc.primary)
-            .rounding(Rounding::same(8.0))
-            .stroke(Stroke::new(1.0_f32, Color32::from_rgba_premultiplied(0x40, 0x40, 0x40, 0x40)))
-            .min_size(Vec2::new(0.0, 34.0)),
-    )
+    ui.scope(|ui| {
+        let w = &mut ui.visuals_mut().widgets;
+        for v in [&mut w.inactive, &mut w.hovered, &mut w.active] {
+            v.bg_fill = tc.primary;
+            v.weak_bg_fill = tc.primary;
+            v.rounding = Rounding::same(10.0);
+            v.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x18));
+        }
+        w.hovered.bg_fill = tc.primary_hover;
+        w.active.bg_fill = tc.primary_hover;
+        ui.add(
+            egui::Button::new(RichText::new(text).size(13.0).color(tc.white).strong())
+                .min_size(Vec2::new(0.0, 36.0)),
+        )
+    })
+    .inner
 }
 
 pub fn secondary_button(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) -> Response {
-    ui.add(
-        egui::Button::new(RichText::new(text).size(13.0).color(tc.text))
-            .fill(Color32::from_rgba_premultiplied(0x0f, 0x0f, 0x0f, 0x0f))
-            .rounding(Rounding::same(8.0))
-            .stroke(Stroke::new(1.0_f32, tc.border))
-            .min_size(Vec2::new(0.0, 34.0)),
-    )
+    ui.scope(|ui| {
+        let w = &mut ui.visuals_mut().widgets;
+        for v in [&mut w.inactive, &mut w.hovered, &mut w.active] {
+            v.bg_fill = tc.surface_high;
+            v.weak_bg_fill = tc.surface_high;
+            v.rounding = Rounding::same(10.0);
+            v.bg_stroke = Stroke::new(1.0_f32, tc.border);
+            v.fg_stroke.color = tc.text;
+        }
+        w.hovered.bg_fill = tc.surface_highest;
+        w.active.bg_fill = tc.surface_highest;
+        ui.add(
+            egui::Button::new(RichText::new(text).size(12.5).color(tc.text))
+                .min_size(Vec2::new(0.0, 36.0)),
+        )
+    })
+    .inner
 }
 
 pub fn ghost_button(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) -> Response {
-    ui.add(
-        egui::Button::new(RichText::new(text).size(12.0).color(tc.muted))
-            .fill(Color32::TRANSPARENT)
-            .rounding(Rounding::same(6.0))
-            .stroke(Stroke::NONE)
-            .min_size(Vec2::new(0.0, 26.0)),
-    )
+    ui.scope(|ui| {
+        let w = &mut ui.visuals_mut().widgets;
+        w.inactive.bg_fill = Color32::TRANSPARENT;
+        w.inactive.bg_stroke = Stroke::NONE;
+        w.hovered.bg_fill = tc.surface_high;
+        w.hovered.bg_stroke = Stroke::NONE;
+        w.active.bg_fill = tc.surface_high;
+        w.active.bg_stroke = Stroke::NONE;
+        for v in [&mut w.inactive, &mut w.hovered, &mut w.active] {
+            v.rounding = Rounding::same(8.0);
+        }
+        ui.add(
+            egui::Button::new(RichText::new(text).size(12.0).color(tc.muted))
+                .min_size(Vec2::new(0.0, 30.0)),
+        )
+    })
+    .inner
 }
 
 pub fn chip(ui: &mut egui::Ui, text: &str, selected: bool, tc: &ThemeColors) -> Response {
-    let (fg, bg, stroke) = if selected {
-        (tc.primary_light, tc.primary_soft, Stroke::new(1.0_f32, tc.primary))
-    } else {
-        (tc.muted, tc.surface_low, Stroke::new(1.0_f32, tc.border))
-    };
-    ui.add(
-        egui::Button::new(RichText::new(text).size(12.0).color(fg))
-            .fill(bg)
-            .rounding(Rounding::same(999.0))
-            .stroke(stroke)
-            .min_size(Vec2::new(0.0, 28.0)),
-    )
+    let fg = if selected { tc.primary_light } else { tc.muted };
+    ui.scope(|ui| {
+        let w = &mut ui.visuals_mut().widgets;
+        let base = if selected { tc.primary_soft } else { tc.surface_high };
+        let hover = if selected { tc.primary_soft } else { tc.surface_highest };
+        for v in [&mut w.inactive, &mut w.hovered, &mut w.active] {
+            v.bg_fill = base;
+            v.weak_bg_fill = base;
+            v.rounding = Rounding::same(999.0);
+            v.bg_stroke = Stroke::new(
+                1.0_f32,
+                if selected { tc.primary } else { tc.border_soft },
+            );
+        }
+        w.hovered.bg_fill = hover;
+        w.active.bg_fill = hover;
+        ui.add(
+            egui::Button::new(RichText::new(text).size(11.5).color(fg))
+                .min_size(Vec2::new(0.0, 30.0)),
+        )
+    })
+    .inner
 }
 
 pub fn pill(ui: &mut egui::Ui, text: &str, fg: Color32, bg: Color32) {
     egui::Frame::none()
         .fill(bg)
         .rounding(Rounding::same(999.0))
-        .inner_margin(egui::Margin::symmetric(8.0, 3.0))
+        .inner_margin(egui::Margin::symmetric(9.0, 4.0))
         .show(ui, |ui| {
             ui.label(RichText::new(text).size(10.5).color(fg));
         });
@@ -285,7 +358,7 @@ pub fn progress(ui: &mut egui::Ui, ratio: f32, color: Color32, tc: &ThemeColors)
     let width = ui.available_width();
     let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 6.0), egui::Sense::hover());
     let painter = ui.painter();
-    painter.rect_filled(rect, Rounding::same(3.0), tc.surface_high);
+    painter.rect_filled(rect, Rounding::same(3.0), tc.surface_highest);
     let filled = Rect::from_min_size(rect.min, Vec2::new(width * ratio.clamp(0.0, 1.0), rect.height()));
     if filled.width() > 1.0 {
         painter.rect_filled(filled, Rounding::same(3.0), color);
@@ -294,14 +367,14 @@ pub fn progress(ui: &mut egui::Ui, ratio: f32, color: Color32, tc: &ThemeColors)
 
 pub fn field(ui: &mut egui::Ui, label_text: &str, value: &mut String, hint: &str, tc: &ThemeColors) {
     ui.label(RichText::new(label_text).size(10.5).color(tc.muted_dim).strong());
-    ui.add_space(4.0);
+    ui.add_space(5.0);
     ui.add(
         egui::TextEdit::singleline(value)
             .hint_text(RichText::new(hint).color(tc.muted_dim))
             .desired_width(f32::INFINITY)
-            .margin(Vec2::new(10.0, 8.0)),
+            .margin(Vec2::new(12.0, 9.0)),
     );
-    ui.add_space(4.0);
+    ui.add_space(6.0);
 }
 
 /// Search field with a leading magnifier icon, matching the rest of the shell.
@@ -362,59 +435,82 @@ pub fn styled_combo_scope<R>(ui: &mut egui::Ui, tc: &ThemeColors, add: impl FnOn
 pub fn icon_badge(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, size: f32) {
     let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
     let painter = ui.painter();
-    painter.rect_filled(rect, Rounding::same(10.0), bg);
+    painter.rect_filled(rect, Rounding::same((size * 0.3).min(11.0)), bg);
     paint_icon(painter, rect.shrink(size * 0.28), fg, icon, 1.7);
 }
 
 pub fn icon_button(ui: &mut egui::Ui, icon: Icon, tooltip: &str, tc: &ThemeColors) -> Response {
-    let (rect, response) = ui.allocate_exact_size(Vec2::splat(28.0), egui::Sense::click());
+    let (rect, response) = ui.allocate_exact_size(Vec2::splat(32.0), egui::Sense::click());
     let color = if response.hovered() { tc.white } else { tc.muted };
     if response.hovered() {
-        ui.painter().rect_filled(rect, Rounding::same(6.0), Color32::from_rgba_premultiplied(0x0f, 0x0f, 0x0f, 0x0f));
+        ui.painter().rect_filled(
+            rect,
+            Rounding::same(8.0),
+            Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x10),
+        );
     }
-    paint_icon(ui.painter(), rect.shrink(7.0), color, icon, 1.5);
+    paint_icon(ui.painter(), rect.shrink(8.0), color, icon, 1.5);
     response.on_hover_text(tooltip)
 }
 
 pub fn sub_nav_item(ui: &mut egui::Ui, text: &str, selected: bool, tc: &ThemeColors) -> Response {
-    let height = 28.0;
+    let height = 30.0;
     let width = ui.available_width();
     let (rect, response) = ui.allocate_exact_size(Vec2::new(width, height), egui::Sense::click());
     let painter = ui.painter();
     if selected {
-        painter.rect_filled(rect, Rounding::same(7.0), tc.primary_soft);
+        painter.rect_filled(rect, Rounding::same(8.0), tc.primary_soft);
         painter.rect_filled(
             Rect::from_min_size(Pos2::new(rect.left() + 12.0, rect.center().y - 7.0), Vec2::new(2.0, 14.0)),
             Rounding::same(1.0),
             tc.primary_light,
         );
     } else if response.hovered() {
-        painter.rect_filled(rect, Rounding::same(7.0), Color32::from_rgba_premultiplied(0x0d, 0x0d, 0x0d, 0x0d));
+        painter.rect_filled(
+            rect,
+            Rounding::same(8.0),
+            Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x08),
+        );
     }
     painter.text(
         Pos2::new(rect.left() + 26.0, rect.center().y),
         egui::Align2::LEFT_CENTER,
         text,
         FontId::proportional(11.5),
-        if selected { tc.primary_light } else { tc.text },
+        if selected { tc.primary_light } else { tc.muted },
     );
     response
 }
 
 pub fn nav_item(ui: &mut egui::Ui, icon: Icon, text: &str, selected: bool, tc: &ThemeColors) -> Response {
-    let height = 36.0;
+    let height = 38.0;
     let width = ui.available_width();
     let (rect, response) = ui.allocate_exact_size(Vec2::new(width, height), egui::Sense::click());
     let painter = ui.painter();
     if selected {
-        painter.rect_filled(rect, Rounding::same(8.0), tc.primary);
+        painter.rect_filled(rect, Rounding::same(10.0), tc.primary_soft);
+        painter.rect_filled(
+            Rect::from_min_size(Pos2::new(rect.left(), rect.center().y - 11.0), Vec2::new(3.0, 22.0)),
+            Rounding::same(1.5),
+            tc.primary_light,
+        );
     } else if response.hovered() {
-        painter.rect_filled(rect, Rounding::same(8.0), Color32::from_rgba_premultiplied(0x0d, 0x0d, 0x0d, 0x0d));
+        painter.rect_filled(
+            rect,
+            Rounding::same(10.0),
+            Color32::from_rgba_unmultiplied(0xff, 0xff, 0xff, 0x08),
+        );
     }
-    let color = if selected { tc.white } else { tc.text };
-    paint_icon(painter, Rect::from_center_size(Pos2::new(rect.left() + 18.0, rect.center().y), Vec2::splat(16.0)), color, icon, 1.6);
+    let color = if selected { tc.white } else { tc.muted };
+    paint_icon(
+        painter,
+        Rect::from_center_size(Pos2::new(rect.left() + 20.0, rect.center().y), Vec2::splat(16.0)),
+        if selected { tc.primary_light } else { tc.muted },
+        icon,
+        1.6,
+    );
     painter.text(
-        Pos2::new(rect.left() + 34.0, rect.center().y),
+        Pos2::new(rect.left() + 38.0, rect.center().y),
         egui::Align2::LEFT_CENTER,
         text,
         FontId::proportional(12.5),
@@ -441,41 +537,76 @@ pub struct Metric<'a> {
 }
 
 pub fn metric_card(ui: &mut egui::Ui, metric: Metric<'_>, tc: &ThemeColors) {
-    card_pad(ui, 16.0, |ui| {
-        ui.set_min_height(104.0);
-        ui.horizontal(|ui| {
-            ui.vertical(|ui| {
-                ui.set_max_width(ui.available_width() - 48.0);
-                ui.label(RichText::new(metric.label).size(10.5).color(tc.muted_dim).strong());
-                ui.add_space(5.0);
-                let avail_w = ui.available_width();
-                let text = metric.value;
-                let galley = ui.painter().layout_no_wrap(text.to_owned(), FontId::proportional(22.0), metric.accent);
-                let size = if galley.size().x > avail_w {
-                    22.0 * (avail_w / galley.size().x).max(0.55)
-                } else {
-                    22.0
-                };
-                ui.label(RichText::new(text).size(size).color(metric.accent).strong());
+    let response = egui::Frame::none()
+        .fill(tc.surface)
+        .rounding(Rounding::same(14.0))
+        .stroke(Stroke::new(1.0_f32, tc.border_soft))
+        .shadow(egui::epaint::Shadow {
+            offset: egui::vec2(0.0, 4.0),
+            blur: 14.0,
+            spread: -6.0,
+            color: Color32::from_black_alpha(110),
+        })
+        .inner_margin(egui::Margin::same(16.0))
+        .show(ui, |ui| {
+            ui.set_min_height(108.0);
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.set_max_width(ui.available_width() - 48.0);
+                    ui.label(RichText::new(metric.label).size(10.0).color(tc.muted_dim).strong());
+                    ui.add_space(6.0);
+                    let avail_w = ui.available_width();
+                    let text = metric.value;
+                    let galley = ui.painter().layout_no_wrap(
+                        text.to_owned(),
+                        FontId::proportional(23.0),
+                        metric.accent,
+                    );
+                    let size = if galley.size().x > avail_w {
+                        23.0 * (avail_w / galley.size().x).max(0.55)
+                    } else {
+                        23.0
+                    };
+                    ui.label(RichText::new(text).size(size).color(metric.accent).strong());
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    icon_badge(ui, metric.icon, metric.icon_fg, metric.icon_bg, 36.0);
+                });
             });
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                icon_badge(ui, metric.icon, metric.icon_fg, metric.icon_bg, 36.0);
-            });
-        });
-        ui.add_space(8.0);
-        if let Some((ratio, color)) = metric.progress {
-            progress(ui, ratio, color, tc);
-            ui.add_space(6.0);
-        }
-        ui.horizontal(|ui| {
-            if !metric.delta.is_empty() {
-                ui.label(RichText::new(metric.delta).size(10.5).color(metric.delta_color).strong());
+            ui.add_space(8.0);
+            if let Some((ratio, color)) = metric.progress {
+                progress(ui, ratio, color, tc);
+                ui.add_space(6.0);
             }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(metric.footnote).size(10.5).color(tc.muted));
+            ui.horizontal(|ui| {
+                if !metric.delta.is_empty() {
+                    let tag = egui::Frame::none()
+                        .fill(tc.surface_high)
+                        .rounding(Rounding::same(999.0))
+                        .inner_margin(egui::Margin::symmetric(8.0, 3.0))
+                        .show(ui, |ui| {
+                            ui.label(RichText::new(metric.delta).size(10.0).color(metric.delta_color).strong());
+                        });
+                    tag.response;
+                } else {
+                    ui.label(RichText::new("").size(10.0));
+                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if !metric.footnote.is_empty() {
+                        ui.label(RichText::new(metric.footnote).size(10.0).color(tc.muted));
+                    }
+                });
             });
         });
-    }, tc);
+
+    let r = response.response.rect;
+    ui.painter().line_segment(
+        [
+            Pos2::new(r.left() + 16.0, r.top() + 0.75),
+            Pos2::new(r.right() - 16.0, r.top() + 0.75),
+        ],
+        Stroke::new(2.0_f32, metric.accent),
+    );
 }
 
 // ---------------------------------------------------------------------------

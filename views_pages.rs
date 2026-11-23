@@ -17,9 +17,13 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Buku Transaksi", &tc);
-                ui.add_space(2.0);
-                label(ui, "Seluruh catatan pemasukan dan pengeluaran proyek ini.", 11.5, tc.muted);
+                page_heading(
+                    ui,
+                    "Ledger",
+                    "Buku Transaksi",
+                    "Seluruh catatan pemasukan dan pengeluaran proyek ini.",
+                    &tc,
+                );
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {
@@ -57,7 +61,7 @@ impl App {
         let width = ((ui.available_width() - gap * 2.0) / 3.0).floor().max(200.0);
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "PEMASUKAN TERFILTER",
                     value: &format_rp(income),
@@ -72,7 +76,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "PENGELUARAN TERFILTER",
                     value: &format_rp(expense),
@@ -87,7 +91,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "ARUS KAS BERSIH",
                     value: &format_rp(net),
@@ -236,11 +240,14 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Kelola Tagihan", &tc);
-                ui.add_space(2.0);
-                label(ui, "Pantau tagihan rutin, jatuh tempo, dan status pembayaran.", 11.5, tc.muted);
+                page_heading(
+                    ui,
+                    "Liabilitas",
+                    "Kelola Tagihan",
+                    "Pantau tagihan rutin, jatuh tempo, dan status pembayaran.",
+                    &tc,
+                );
             });
-            
         });
 
         ui.add_space(16.0);
@@ -251,7 +258,7 @@ impl App {
         let width = ((ui.available_width() - gap * 2.0) / 3.0).floor().max(200.0);
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "TOTAL KEWAJIBAN",
                     value: &format_rp(pending + paid),
@@ -266,7 +273,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "SUDAH TERBAYAR",
                     value: &format_rp(paid),
@@ -281,7 +288,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "BELUM DIBAYAR",
                     value: &format_rp(pending),
@@ -303,7 +310,7 @@ impl App {
             ui.horizontal(|ui| {
                 section_title(ui, "Daftar Tagihan", "Kelola pembayaran rutin dan cicilan", &tc);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    pill(ui, &format!("{} tagihan", p.bills.len()), tc.muted, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c));
+                    pill(ui, &format!("{} tagihan", p.bills.len()), tc.muted, tc.surface_high);
                 });
             });
             ui.add_space(12.0);
@@ -384,9 +391,13 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Analisis & Anggaran", &tc);
-                ui.add_space(2.0);
-                label(ui, "Kendali belanja, rasio tabungan, dan komposisi pengeluaran.", 11.5, tc.muted);
+                page_heading(
+                    ui,
+                    "Insight",
+                    "Analisis & Anggaran",
+                    "Kendali belanja, rasio tabungan, dan komposisi pengeluaran.",
+                    &tc,
+                );
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if secondary_button(ui, "Ekspor Laporan", &tc).clicked() {
@@ -503,7 +514,7 @@ impl App {
             let center = Pos2::new(rect.center().x, rect.center().y + 4.0);
             let radius = 58.0;
             let painter = ui.painter();
-            painter.circle_stroke(center, radius, Stroke::new(14.0_f32, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c)));
+            painter.circle_stroke(center, radius, Stroke::new(14.0_f32, tc.surface_high));
 
             let mut cats: Vec<(String, f64)> = Vec::new();
             for t in p.transactions.iter().filter(|t| t.kind == TxKind::Expense) {
@@ -554,9 +565,13 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Pengaturan", &tc);
-                ui.add_space(2.0);
-                label(ui, &format!("Bagian: {}", self.settings_section.label()), 11.5, tc.muted);
+                page_heading(
+                    ui,
+                    "Preferensi",
+                    "Pengaturan",
+                    &format!("Bagian: {}", self.settings_section.label()),
+                    &tc,
+                );
             });
         });
 

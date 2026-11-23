@@ -8,25 +8,32 @@ use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
 
 pub fn dim(ctx: &egui::Context) {
     let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Middle, egui::Id::new("finflow_dim")));
-    painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(30));
+    painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(80));
 }
 
 fn modal_frame(tc: &ThemeColors) -> egui::Frame {
     egui::Frame::none()
         .fill(tc.surface)
-        .rounding(Rounding::same(12.0))
+        .rounding(Rounding::same(16.0))
         .stroke(Stroke::new(1.0_f32, tc.border))
-        .inner_margin(egui::Margin::same(20.0))
+        .shadow(egui::epaint::Shadow {
+            offset: egui::vec2(0.0, 18.0),
+            blur: 48.0,
+            spread: -10.0,
+            color: Color32::from_black_alpha(190),
+        })
+        .inner_margin(egui::Margin::same(24.0))
 }
 
 fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading: &str, subtitle: &str, tc: &ThemeColors) -> bool {
     let mut close = false;
     ui.horizontal(|ui| {
-        icon_badge(ui, icon, fg, bg, 34.0);
-        ui.add_space(2.0);
+        icon_badge(ui, icon, fg, bg, 38.0);
+        ui.add_space(6.0);
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new(heading).size(16.0).color(tc.white).strong());
-            ui.label(egui::RichText::new(subtitle).size(10.5).color(tc.muted));
+            ui.label(egui::RichText::new(heading).size(17.0).color(tc.white).strong());
+            ui.add_space(2.0);
+            ui.label(egui::RichText::new(subtitle).size(11.0).color(tc.muted));
         });
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             if icon_button(ui, Icon::Close, "Tutup", tc).clicked() {
@@ -34,66 +41,84 @@ fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading
             }
         });
     });
-    ui.add_space(12.0);
+    ui.add_space(14.0);
+    divider(ui, tc);
+    ui.add_space(14.0);
     close
 }
 
 fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
     ui.label(egui::RichText::new("NOMINAL").size(10.5).color(tc.muted_dim).strong());
-    ui.add_space(3.0);
+    ui.add_space(5.0);
     ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
         egui::Frame::none()
             .fill(tc.surface_high)
-            .rounding(Rounding::same(8.0))
-            .inner_margin(egui::Margin::symmetric(12.0, 9.0))
+            .rounding(Rounding::same(10.0))
+            .stroke(Stroke::new(1.0_f32, tc.border_soft))
+            .inner_margin(egui::Margin::symmetric(12.0, 10.0))
             .show(ui, |ui| {
                 ui.label(egui::RichText::new("Rp").size(13.0).color(tc.primary_light).strong());
             });
-        ui.add(
-            egui::TextEdit::singleline(amount)
-                .hint_text(RichText::new("0").color(tc.muted_dim))
-                .desired_width(f32::INFINITY)
-                .font(egui::TextStyle::Heading)
-                .margin(Vec2::new(12.0, 8.0)),
-        );
+        egui::Frame::none()
+            .fill(tc.surface_high)
+            .rounding(Rounding::same(10.0))
+            .stroke(Stroke::new(1.0_f32, tc.border_soft))
+            .inner_margin(egui::Margin::symmetric(12.0, 8.0))
+            .show(ui, |ui| {
+                ui.add(
+                    egui::TextEdit::singleline(amount)
+                        .hint_text(RichText::new("0").color(tc.muted_dim))
+                        .desired_width(f32::INFINITY)
+                        .frame(false)
+                        .font(egui::TextStyle::Heading)
+                        .margin(Vec2::ZERO),
+                );
+            });
     });
-    ui.add_space(6.0);
+    ui.add_space(8.0);
 }
 
 fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
     ui.label(egui::RichText::new("KATEGORI").size(10.5).color(tc.muted_dim).strong());
-    ui.add_space(3.0);
-    egui::ComboBox::from_id_source(format!("cat_{}", value))
-        .selected_text(value.clone())
-        .width(ui.available_width())
-        .show_ui(ui, |ui| {
-            for option in options {
-                ui.selectable_value(value, option.to_string(), *option);
-            }
-        });
+    ui.add_space(5.0);
+    styled_combo_scope(ui, tc, |ui| {
+        egui::ComboBox::from_id_source(format!("cat_{}", value))
+            .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
+            .width(ui.available_width())
+            .height(36.0)
+            .show_ui(ui, |ui| {
+                for option in options {
+                    ui.selectable_value(value, option.to_string(), *option);
+                }
+            });
+    });
 }
 
 fn account_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
     ui.label(egui::RichText::new("AKUN BANK").size(10.5).color(tc.muted_dim).strong());
-    ui.add_space(3.0);
-    egui::ComboBox::from_id_source(format!("acc_{}", value))
-        .selected_text(value.clone())
-        .width(ui.available_width())
-        .show_ui(ui, |ui| {
-            for option in options {
-                ui.selectable_value(value, option.to_string(), *option);
-            }
-        });
+    ui.add_space(5.0);
+    styled_combo_scope(ui, tc, |ui| {
+        egui::ComboBox::from_id_source(format!("acc_{}", value))
+            .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
+            .width(ui.available_width())
+            .height(36.0)
+            .show_ui(ui, |ui| {
+                for option in options {
+                    ui.selectable_value(value, option.to_string(), *option);
+                }
+            });
+    });
 }
 
 fn date_field(ui: &mut egui::Ui, value: &mut String, tc: &ThemeColors) {
     ui.label(egui::RichText::new("TANGGAL").size(10.5).color(tc.muted_dim).strong());
-    ui.add_space(3.0);
+    ui.add_space(5.0);
     ui.add(
         egui::TextEdit::singleline(value)
             .hint_text(RichText::new("2026-11-22").color(tc.muted_dim))
             .desired_width(f32::INFINITY)
-            .margin(Vec2::new(10.0, 8.0)),
+            .margin(Vec2::new(12.0, 9.0)),
     );
 }
 

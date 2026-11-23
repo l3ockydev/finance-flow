@@ -11,7 +11,7 @@ mod views;
 mod views_pages;
 
 use base64::Engine;
-use eframe::egui::{self, FontId, Rounding, Sense, Stroke, Vec2};
+use eframe::egui::{self, Color32, FontId, Rounding, Sense, Stroke, Vec2};
 use model::*;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -631,12 +631,12 @@ impl App {
     fn top_bar(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::TopBottomPanel::top("finflow_top")
-            .exact_height(48.0)
+            .exact_height(56.0)
             .frame(
                 egui::Frame::none()
                     .fill(tc.surface_low)
                     .stroke(Stroke::new(1.0_f32, tc.border_soft))
-                    .inner_margin(egui::Margin::symmetric(16.0, 8.0)),
+                    .inner_margin(egui::Margin::symmetric(20.0, 10.0)),
             )
             .show(ctx, |ui| {
                 ui.horizontal_centered(|ui| {
@@ -657,12 +657,18 @@ impl App {
                             tc.white,
                         );
                     }
-                    ui.add_space(8.0);
-                    ui.label(egui::RichText::new("FinFlow").size(14.5).color(tc.white).strong());
-                    ui.label(egui::RichText::new("— Keuangan Pribadi").size(10.0).color(tc.muted));
+                    ui.add_space(10.0);
+                    ui.label(egui::RichText::new("FinFlow").size(15.0).color(tc.white).strong());
+                    ui.add_space(6.0);
+                    ui.label(
+                        egui::RichText::new("KEUANGAN PRIBADI")
+                            .size(9.5)
+                            .color(tc.muted_dim)
+                            .strong(),
+                    );
 
-                    ui.add_space(18.0);
-                    let (line, _) = ui.allocate_exact_size(Vec2::new(1.0, 20.0), Sense::hover());
+                    ui.add_space(20.0);
+                    let (line, _) = ui.allocate_exact_size(Vec2::new(1.0, 22.0), Sense::hover());
                     ui.painter().rect_filled(line, Rounding::ZERO, tc.border);
                     ui.add_space(14.0);
 
@@ -678,26 +684,34 @@ impl App {
                     let mut switch_to: Option<String> = None;
                     let mut new_project = false;
                     let mut open_file = false;
-                    egui::ComboBox::from_id_source("project_switcher")
-                        .selected_text(egui::RichText::new(current_title).size(11.5).color(tc.text))
-                        .width(190.0)
-                        .show_ui(ui, |ui| {
-                            for (id, title) in &items {
-                                if ui
-                                    .selectable_label(self.current.as_deref() == Some(id.as_str()), title)
-                                    .clicked()
-                                {
-                                    switch_to = Some(id.clone());
+                    styled_combo_scope(ui, &tc, |ui| {
+                        egui::ComboBox::from_id_source("project_switcher")
+                            .selected_text(
+                                egui::RichText::new(current_title)
+                                    .size(12.0)
+                                    .color(tc.text)
+                                    .strong(),
+                            )
+                            .width(210.0)
+                            .height(34.0)
+                            .show_ui(ui, |ui| {
+                                for (id, title) in &items {
+                                    if ui
+                                        .selectable_label(self.current.as_deref() == Some(id.as_str()), title)
+                                        .clicked()
+                                    {
+                                        switch_to = Some(id.clone());
+                                    }
                                 }
-                            }
-                            ui.separator();
-                            if ui.button("+ Proyek Baru").clicked() {
-                                new_project = true;
-                            }
-                            if ui.button("Buka file .ff...").clicked() {
-                                open_file = true;
-                            }
-                        });
+                                ui.separator();
+                                if ui.button("+ Proyek Baru").clicked() {
+                                    new_project = true;
+                                }
+                                if ui.button("Buka file .ff...").clicked() {
+                                    open_file = true;
+                                }
+                            });
+                    });
                     if let Some(id) = switch_to {
                         self.current = Some(id);
                         self.view = View::Dashboard;
@@ -711,9 +725,22 @@ impl App {
                     }
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let (dot, _) = ui.allocate_exact_size(Vec2::splat(7.0), Sense::hover());
-                        ui.painter().circle_filled(dot.center(), 3.5, tc.income);
-                        ui.label(egui::RichText::new("Penyimpanan Otomatis").size(10.0).color(tc.income));
+                        egui::Frame::none()
+                            .fill(tc.income_soft)
+                            .rounding(Rounding::same(999.0))
+                            .inner_margin(egui::Margin::symmetric(10.0, 5.0))
+                            .show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 7.0;
+                                    let (dot, _) = ui.allocate_exact_size(Vec2::splat(7.0), Sense::hover());
+                                    ui.painter().circle_filled(dot.center(), 3.5, tc.income);
+                                    ui.label(
+                                        egui::RichText::new("Tersimpan otomatis")
+                                            .size(10.0)
+                                            .color(tc.income),
+                                    );
+                                });
+                            });
                     });
                 });
             });
@@ -722,17 +749,17 @@ impl App {
     fn sidebar(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::SidePanel::left("finflow_sidebar")
-            .exact_width(212.0)
+            .exact_width(216.0)
             .resizable(false)
             .frame(
                 egui::Frame::none()
                     .fill(tc.surface_low)
                     .stroke(Stroke::new(1.0_f32, tc.border_soft))
-                    .inner_margin(egui::Margin::symmetric(12.0, 12.0)),
+                    .inner_margin(egui::Margin::symmetric(14.0, 14.0)),
             )
             .show(ctx, |ui| {
-                overline(ui, "MENU UTAMA", &tc);
-                ui.add_space(8.0);
+                overline(ui, "Menu Utama", &tc);
+                ui.add_space(10.0);
                 if nav_item(ui, Icon::Grid, "Dashboard", self.view == View::Dashboard, &tc).clicked() {
                     self.view = View::Dashboard;
                 }
@@ -753,8 +780,8 @@ impl App {
                 ui.add_space(14.0);
                 divider(ui, &tc);
                 ui.add_space(10.0);
-                overline(ui, "PREFERENSI", &tc);
-                ui.add_space(6.0);
+                overline(ui, "Preferensi", &tc);
+                ui.add_space(8.0);
                 let settings_selected = self.view == View::Settings;
                 let resp = nav_item(ui, Icon::Gear, "Pengaturan", settings_selected, &tc);
                 if resp.clicked() {
@@ -805,16 +832,22 @@ impl App {
                     });
                 }
 
-                if ui.available_height() > 60.0 {
+                if ui.available_height() > 70.0 {
                     ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                        ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new("build by Cakra Bisnis").size(10.0).color(tc.muted_dim));
-                        });
-                        ui.add_space(3.0);
-                        ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new("License for Personal use").size(9.0).color(tc.muted_dim));
-                        });
                         ui.add_space(4.0);
+                        ui.label(
+                            egui::RichText::new("Penggunaan pribadi")
+                                .size(9.5)
+                                .color(tc.muted_dim),
+                        );
+                        ui.label(
+                            egui::RichText::new("by Cakra Bisnis")
+                                .size(10.0)
+                                .color(tc.muted),
+                        );
+                        ui.add_space(8.0);
+                        divider(ui, &tc);
+                        ui.add_space(8.0);
                     });
                 }
             });
@@ -823,7 +856,7 @@ impl App {
     fn central(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::CentralPanel::default()
-            .frame(egui::Frame::none().fill(tc.bg).inner_margin(egui::Margin::symmetric(24.0, 16.0)))
+            .frame(egui::Frame::none().fill(tc.bg).inner_margin(egui::Margin::symmetric(28.0, 20.0)))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
@@ -835,7 +868,7 @@ impl App {
                             View::Analysis => self.analysis(ui),
                             View::Settings => self.settings(ui),
                         }
-                        ui.add_space(18.0);
+                        ui.add_space(24.0);
                     });
             });
     }
@@ -854,10 +887,16 @@ impl App {
             .anchor(egui::Align2::RIGHT_BOTTOM, Vec2::new(-22.0, -22.0))
             .show(ctx, |ui| {
                 egui::Frame::none()
-                    .fill(tc.surface_high)
-                    .rounding(Rounding::same(10.0))
+                    .fill(tc.surface_highest)
+                    .rounding(Rounding::same(12.0))
                     .stroke(Stroke::new(1.0_f32, tc.border))
-                    .inner_margin(egui::Margin::symmetric(14.0, 10.0))
+                    .shadow(egui::epaint::Shadow {
+                        offset: egui::vec2(0.0, 8.0),
+                        blur: 24.0,
+                        spread: -6.0,
+                        color: Color32::from_black_alpha(150),
+                    })
+                    .inner_margin(egui::Margin::symmetric(16.0, 11.0))
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             let (rect, _) = ui.allocate_exact_size(Vec2::splat(14.0), Sense::hover());
