@@ -73,7 +73,9 @@ projects\
 
 - Setiap proyek = satu file `.ff` berisi transaksi, tagihan, anggaran, dan bukti gambar (base64).
 - Auto-save dilakukan dengan penulisan atomik (`*.ff.tmp` → `*.ff`).
-- **Backup cukup dengan menyalin folder `projects\`.**
+- **Backup otomatis:** setiap penyimpanan membuat salinan di `%LOCALAPPDATA%\FinFlow\backups\` (maks. 20 per proyek). Pulihkan via **Pengaturan → Privasi & Update → Pulihkan dari Backup...**.
+- **Hapus transaksi bisa diurungkan** lewat tombol *Urungkan* di notifikasi selama 6 detik.
+- Backup manual tetap bisa dengan menyalin folder `projects\`.
 - Untuk pindah komputer, salin file `.ff` ke folder `projects\` di instalasi baru.
 - Proyek **kosong** dibuat otomatis jika folder `projects\` kosong — tidak ada transaksi atau tagihan contoh.
 
@@ -117,6 +119,7 @@ lalu executable diganti **setelah aplikasi ditutup** — pekerjaan Anda yang sed
 berjalan tidak terganggu. Saat membuka versi baru, muncul notifikasi
 *"FinFlow diperbarui ke v…"*.
 
+- Pemeriksaan update **dapat dimatikan** di **Pengaturan → Privasi & Update**. Jika dimatikan, FinFlow tidak menghubungi jaringan sama sekali. Lihat [`PRIVACY.md`](PRIVACY.md).
 - Internet hanya diperlukan untuk pemeriksaan update; jika offline, pemeriksaan
   gagal secara senyap dan aplikasi tetap berjalan normal.
 - Nama repository dibaca dari `update.json`. File bawaan memakai placeholder
@@ -208,7 +211,9 @@ projects\
 
 - Each project is one `.ff` file containing transactions, bills, budgets, and image evidence (base64).
 - Auto-save uses atomic writes (`*.ff.tmp` → `*.ff`).
-- **Back up simply by copying the `projects\` folder.**
+- **Automatic backup:** every save creates a copy in `%LOCALAPPDATA%\FinFlow\backups\` (max. 20 per project). Restore via **Settings → Privacy & Update → Restore from Backup...**.
+- **Deleted transactions can be undone** using the *Undo* button in the toast for 6 seconds.
+- Manual backup is still possible by copying the `projects\` folder.
 - To move computers, copy the `.ff` files into `projects\` of the new installation.
 - A **blank** project is created automatically when `projects\` is empty — no sample transactions or bills.
 
@@ -251,6 +256,7 @@ If a newer version exists, the ZIP is downloaded and the executable is replaced
 **after the app closes** — your current session is never interrupted. The next
 launch shows a *"FinFlow updated to v…"* notification.
 
+- The update check **can be disabled** in **Settings → Privacy & Update**. When disabled, FinFlow never contacts the network. See [`PRIVACY.md`](PRIVACY.md).
 - Internet is only needed for the update check; when offline the check fails
   silently and the app works normally.
 - The repository name comes from `update.json`. The bundled file uses the

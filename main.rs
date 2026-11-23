@@ -13,6 +13,7 @@ mod views_pages;
 use base64::Engine;
 use eframe::egui::{self, Color32, FontId, Rounding, Sense, Stroke, Vec2};
 use model::*;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -60,6 +61,7 @@ pub enum SettingsSection {
     Income,
     Bills,
     Default,
+    Privacy,
 }
 
 impl SettingsSection {
@@ -70,8 +72,65 @@ impl SettingsSection {
             SettingsSection::Income => "Pemasukan",
             SettingsSection::Bills => "Tagihan",
             SettingsSection::Default => "Default",
+            SettingsSection::Privacy => "Privasi & Update",
         }
     }
+}
+
+/// Preferensi aplikasi yang tidak ikut masuk ke file `.ff` proyek.
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AppSettings {
+    pub check_updates: bool,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self { check_updates: true }
+    }
+}
+
+impl AppSettings {
+    fn path() -> PathBuf {
+        let base = std::env::var("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from(".").join(".finflow"));
+        base.join("FinFlow").join("settings.json")
+    }
+
+    fn load() -> Self {
+        fs::read_to_string(Self::path())
+            .ok()
+            .and_then(|content| serde_json::from_str::<Self>(&content).ok())
+            .unwrap_or_default()
+    }
+
+    fn save(&self) {
+        let path = Self::path();
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Ok(json) = serde_json::to_string_pretty(self) {
+            let temp = path.with_extension("json.tmp");
+            if fs::write(&temp, json).is_ok() {
+                let _ = fs::rename(&temp, &path);
+            }
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct UndoDelete {
+    pub project_id: String,
+    pub index: usize,
+    pub transaction: Transaction,
+}
+
+#[derive(Clone)]
+pub struct Toast {
+    pub message: String,
+    pub created: Instant,
+    pub undo: Option<UndoDelete>,
 }
 
 #[derive(Clone)]
@@ -154,7 +213,8 @@ pub struct App {
     pub detail_tx: Option<String>,
     pub editing_tx: Option<String>,
     pub evidence_tex: Option<(String, egui::TextureHandle)>,
-    pub toast_message: Option<(String, Instant)>,
+    pub toast_message: Option<Toast>,
+    pub settings: AppSettings,
     pub add_tx_tab: u8,
     pub settings_section: SettingsSection,
     pub settings_expanded: bool,
@@ -168,6 +228,10 @@ impl App {
             .unwrap_or_else(|_| PathBuf::from("."))
             .join("projects");
         let _ = fs::create_dir_all(&dir);
+        let settings = AppSettings::load();
+        if settings.check_updates {
+            spawn_auto_updater();
+        }
         let mut app = Self {
             projects: Vec::new(),
             current: None,
@@ -184,6 +248,7 @@ impl App {
             editing_tx: None,
             evidence_tex: None,
             toast_message: None,
+            settings,
             add_tx_tab: 0,
             settings_section: SettingsSection::Default,
             settings_expanded: false,
@@ -232,10 +297,61 @@ impl App {
         self.dir.join(format!("{}.ff", slug(&project.id)))
     }
 
+    /// Backup disimpan terpisah dari `projects/` agar data utama tidak pernah
+    /// dihapus atau ditimpa oleh proses pembersihan otomatis.
+    fn backup_root() -> PathBuf {
+        let base = std::env::var("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from(".").join(".finflow"));
+        base.join("FinFlow").join("backups")
+    }
+
+    fn backup_dir(&self, project: &Project) -> PathBuf {
+        Self::backup_root().join(slug(&project.id))
+    }
+
+    fn create_backup(&self, path: &Path, project: &Project) {
+        let Ok(bytes) = fs::read(path) else {
+            return;
+        };
+        let dir = self.backup_dir(project);
+        if fs::create_dir_all(&dir).is_err() {
+            return;
+        }
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        let _ = fs::write(dir.join(format!("{}.ff", stamp)), bytes);
+        self.prune_backups(&dir);
+    }
+
+    fn prune_backups(&self, dir: &Path) {
+        const MAX: usize = 20;
+        let Ok(entries) = fs::read_dir(dir) else {
+            return;
+        };
+        let mut files: Vec<_> = entries
+            .flatten()
+            .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("ff"))
+            .collect();
+        if files.len() <= MAX {
+            return;
+        }
+        files.sort_by_key(|e| e.file_name());
+        let remove_count = files.len() - MAX;
+        for old in files.into_iter().take(remove_count) {
+            let _ = fs::remove_file(old.path());
+        }
+    }
+
     pub fn save_project(&self, project: &Project) {
         let _ = fs::create_dir_all(&self.dir);
         if let Ok(json) = serde_json::to_string_pretty(project) {
             let path = self.project_path(project);
+            if path.exists() {
+                self.create_backup(&path, project);
+            }
             let temp = path.with_extension("ff.tmp");
             if fs::write(&temp, json).is_ok() {
                 let _ = fs::remove_file(&path);
@@ -324,6 +440,21 @@ impl App {
             return;
         };
         self.import_project(&path);
+    }
+
+    /// Pilih salinan otomatis dari folder backup lokal, lalu pulihkan sebagai proyek aktif.
+    pub fn restore_backup_dialog(&mut self) {
+        let root = Self::backup_root();
+        let _ = fs::create_dir_all(&root);
+        let Some(path) = rfd::FileDialog::new()
+            .set_directory(root)
+            .add_filter("FinFlow Backup", &["ff"])
+            .pick_file()
+        else {
+            return;
+        };
+        self.import_project(&path);
+        self.toast("Backup dipulihkan. Periksa kembali isi proyek Anda.");
     }
 
     fn import_project(&mut self, path: &Path) {
@@ -495,9 +626,21 @@ impl App {
     }
 
     pub fn delete_transaction(&mut self, id: &str) {
+        let undo = self.current_project().and_then(|project| {
+            let index = project.transactions.iter().position(|t| t.id == id)?;
+            Some(UndoDelete {
+                project_id: project.id.clone(),
+                index,
+                transaction: project.transactions[index].clone(),
+            })
+        });
         self.commit(|project| project.transactions.retain(|t| t.id != id));
         self.detail_tx = None;
-        self.toast("Transaksi dihapus.");
+        if let Some(undo) = undo {
+            self.toast_with_undo("Transaksi dihapus.", undo);
+        } else {
+            self.toast("Transaksi dihapus.");
+        }
     }
 
     // -- bill actions -------------------------------------------------------
@@ -574,7 +717,42 @@ impl App {
     }
 
     pub fn toast(&mut self, message: &str) {
-        self.toast_message = Some((message.to_string(), Instant::now()));
+        self.toast_message = Some(Toast {
+            message: message.to_string(),
+            created: Instant::now(),
+            undo: None,
+        });
+    }
+
+    pub fn toast_with_undo(&mut self, message: &str, undo: UndoDelete) {
+        self.toast_message = Some(Toast {
+            message: message.to_string(),
+            created: Instant::now(),
+            undo: Some(undo),
+        });
+    }
+
+    pub fn set_check_updates(&mut self, enabled: bool) {
+        self.settings.check_updates = enabled;
+        self.settings.save();
+    }
+
+    pub fn undo_delete(&mut self) {
+        let Some(undo) = self
+            .toast_message
+            .as_ref()
+            .and_then(|toast| toast.undo.clone())
+        else {
+            return;
+        };
+        if let Some(project) = self.projects.iter_mut().find(|p| p.id == undo.project_id) {
+            let index = undo.index.min(project.transactions.len());
+            project.transactions.insert(index, undo.transaction.clone());
+            project.touch();
+            let project = project.clone();
+            self.save_project(&project);
+        }
+        self.toast("Transaksi dikembalikan.");
     }
 
     pub fn ensure_evidence_texture(&mut self, ctx: &egui::Context, key: &str, encoded: &str) {
@@ -819,6 +997,7 @@ impl App {
                         SettingsSection::Income,
                         SettingsSection::Bills,
                         SettingsSection::Default,
+                        SettingsSection::Privacy,
                     ];
                     ui.scope(|ui| {
                         ui.spacing_mut().item_spacing.y = 3.0;
@@ -875,13 +1054,15 @@ impl App {
 
     fn show_toast(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
-        let Some((message, created)) = self.toast_message.clone() else {
+        let Some(toast) = self.toast_message.clone() else {
             return;
         };
-        if created.elapsed() > Duration::from_secs(4) {
+        let timeout = if toast.undo.is_some() { 6 } else { 4 };
+        if toast.created.elapsed() > Duration::from_secs(timeout) {
             self.toast_message = None;
             return;
         }
+        let mut undo_clicked = false;
         egui::Area::new(egui::Id::new("finflow_toast"))
             .order(egui::Order::Foreground)
             .anchor(egui::Align2::RIGHT_BOTTOM, Vec2::new(-22.0, -22.0))
@@ -901,10 +1082,32 @@ impl App {
                         ui.horizontal(|ui| {
                             let (rect, _) = ui.allocate_exact_size(Vec2::splat(14.0), Sense::hover());
                             paint_icon(ui.painter(), rect, tc.income, Icon::Check, 1.4);
-                            ui.label(egui::RichText::new(message).size(11.0).color(tc.text));
+                            ui.label(egui::RichText::new(toast.message).size(11.0).color(tc.text));
+                            if toast.undo.is_some() {
+                                ui.add_space(8.0);
+                                if ui
+                                    .add(
+                                        egui::Button::new(
+                                            egui::RichText::new("Urungkan")
+                                                .size(10.5)
+                                                .color(tc.primary_light)
+                                                .strong(),
+                                        )
+                                        .fill(tc.primary_soft)
+                                        .rounding(Rounding::same(8.0))
+                                        .min_size(Vec2::new(0.0, 26.0)),
+                                    )
+                                    .clicked()
+                                {
+                                    undo_clicked = true;
+                                }
+                            }
                         });
                     });
             });
+        if undo_clicked {
+            self.undo_delete();
+        }
         ctx.request_repaint_after(Duration::from_millis(250));
     }
 }
@@ -1020,8 +1223,6 @@ fn update_notice() -> Option<String> {
 }
 
 fn main() -> eframe::Result<()> {
-    spawn_auto_updater();
-
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1280.0, 720.0])

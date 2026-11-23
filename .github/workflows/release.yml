@@ -27,7 +27,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Copy-Item target\release\finance_flow.exe dist\
-          Copy-Item README.md,LICENSE,update.ps1,update.json dist\
+          Copy-Item README.md,LICENSE,PRIVACY.md,update.ps1,update.json dist\
           @{ repo = $env:GITHUB_REPOSITORY } | ConvertTo-Json -Compress | Set-Content dist\update.json -Encoding UTF8
           Compress-Archive -Path dist\* -DestinationPath finance_flow-windows-x86_64.zip
 

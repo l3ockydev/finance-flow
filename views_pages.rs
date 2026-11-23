@@ -583,7 +583,74 @@ impl App {
             SettingsSection::Income => self.settings_categories(ui, &p, SettingsSection::Income),
             SettingsSection::Expenses => self.settings_categories(ui, &p, SettingsSection::Expenses),
             SettingsSection::Bills => self.settings_categories(ui, &p, SettingsSection::Bills),
+            SettingsSection::Privacy => self.settings_privacy(ui),
         }
+    }
+
+    fn settings_privacy(&mut self, ui: &mut egui::Ui) {
+        let tc = self.theme_colors;
+        let check_updates = self.settings.check_updates;
+
+        ui.columns(2, |cols| {
+            cols[0].vertical(|ui| {
+                card(ui, |ui| {
+                    section_title(ui, "Privasi Data", "Data Anda tetap di komputer ini", &tc);
+                    ui.add_space(16.0);
+                    for line in [
+                        "FinFlow tidak mengirim data ke server mana pun.",
+                        "Semua transaksi tersimpan di file .ff di komputer Anda.",
+                        "Tidak ada akun, telemetri, atau iklan.",
+                        "Koneksi opsional hanya untuk pemeriksaan pembaruan.",
+                    ] {
+                        ui.horizontal(|ui| {
+                            let (rect, _) = ui.allocate_exact_size(Vec2::splat(12.0), egui::Sense::hover());
+                            paint_icon(ui.painter(), rect, tc.income, Icon::Check, 1.2);
+                            ui.add_space(4.0);
+                            label(ui, line, 11.0, tc.text);
+                        });
+                        ui.add_space(7.0);
+                    }
+                    ui.add_space(8.0);
+                    divider(ui, &tc);
+                    ui.add_space(12.0);
+                    label(ui, "Pembaruan Otomatis", 12.5, tc.text);
+                    ui.add_space(6.0);
+                    label(ui, "Periksa rilis baru dari GitHub saat aplikasi dibuka.", 10.5, tc.muted);
+                    ui.add_space(10.0);
+                    let mut enabled = check_updates;
+                    if ui
+                        .add(egui::Checkbox::new(&mut enabled, "Periksa pembaruan saat startup"))
+                        .on_hover_text("Jika dimatikan, FinFlow tidak menghubungi jaringan sama sekali.")
+                        .changed()
+                    {
+                        self.set_check_updates(enabled);
+                        self.toast(if enabled {
+                            "Pemeriksaan pembaruan diaktifkan."
+                        } else {
+                            "Pemeriksaan pembaruan dimatikan — FinFlow sepenuhnya offline."
+                        });
+                    }
+                }, &tc);
+            });
+
+            cols[1].vertical(|ui| {
+                card(ui, |ui| {
+                    section_title(ui, "Backup & Pulihkan", "Jaga salinan laporan Anda", &tc);
+                    ui.add_space(16.0);
+                    label(ui, "Setiap penyimpanan otomatis membuat salinan.", 10.5, tc.muted);
+                    ui.add_space(6.0);
+                    label(ui, "Maksimal 20 salinan terakhir disimpan per proyek.", 10.5, tc.muted);
+                    ui.add_space(6.0);
+                    label(ui, "Backup disimpan di folder lokal FinFlow, terpisah dari data utama.", 10.5, tc.muted);
+                    ui.add_space(18.0);
+                    if secondary_button(ui, "Pulihkan dari Backup...", &tc).clicked() {
+                        self.restore_backup_dialog();
+                    }
+                    ui.add_space(8.0);
+                    label(ui, "Pulihkan mengganti proyek aktif — simpan salinan dulu jika perlu.", 9.5, tc.muted_dim);
+                }, &tc);
+            });
+        });
     }
 
     fn settings_default(&mut self, ui: &mut egui::Ui, p: &Project) {
