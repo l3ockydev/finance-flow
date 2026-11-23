@@ -1,10 +1,10 @@
 //! Transactions ledger, bills, analysis, settings, and empty state.
 
-use crate::model::{*, Theme};
+use crate::model::*;
 use crate::theme::*;
 use crate::views::{bill_icon, category_icon, table_header, tx_row, widths, RowAction};
 use crate::{App, Modal, SettingsSection};
-use eframe::egui::{self, Color32, FontId, Pos2, Rect, RichText, Rounding, Stroke, Vec2};
+use eframe::egui::{self, Color32, Pos2, Rect, RichText, Rounding, Stroke, Vec2};
 
 impl App {
     pub fn transactions(&mut self, ui: &mut egui::Ui) {
@@ -553,7 +553,6 @@ impl App {
             SettingsSection::Income => self.settings_categories(ui, &p, SettingsSection::Income),
             SettingsSection::Expenses => self.settings_categories(ui, &p, SettingsSection::Expenses),
             SettingsSection::Bills => self.settings_categories(ui, &p, SettingsSection::Bills),
-            SettingsSection::Theme => self.settings_theme(ui, &p),
         }
     }
 
@@ -670,153 +669,6 @@ impl App {
                 }, &tc);
             });
         });
-    }
-
-    fn settings_theme(&mut self, ui: &mut egui::Ui, _p: &Project) {
-        let tc = self.theme_colors;
-        let total_w = ui.available_width().max(600.0);
-        card(ui, |ui| {
-            ui.set_min_width(total_w);
-            section_title(ui, "Pilih Tema", "Ganti warna tampilan aplikasi", &tc);
-            ui.add_space(16.0);
-            
-            let themes = [
-                Theme::Default,
-                Theme::Banking,
-                Theme::DarkFinance,
-                Theme::Minimal,
-                Theme::Emerald,
-                Theme::Amber,
-                Theme::Violet,
-            ];
-            
-            // Grid 2 kolom untuk tema
-            let cols = 2;
-            let gap = 12.0;
-            let card_w = (total_w - 40.0 - gap) / cols as f32;
-            
-            for (idx, theme) in themes.iter().enumerate() {
-                let col = idx % cols;
-
-                if col == 0 {
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = gap;
-                        self.render_theme_card(ui, *theme, card_w);
-                        if idx + 1 < themes.len() {
-                            self.render_theme_card(ui, themes[idx + 1], card_w);
-                        } else {
-                            // Empty spacer for odd count
-                            ui.allocate_exact_size(Vec2::new(card_w, 1.0), egui::Sense::hover());
-                        }
-                    });
-                    ui.add_space(12.0);
-                }
-            }
-            
-            ui.add_space(8.0);
-            divider(ui, &tc);
-            ui.add_space(12.0);
-            
-            // Preview section
-            if let Some(proj) = self.current_project() {
-                let tc = ThemeColors::from_theme(proj.theme);
-                ui.horizontal(|ui| {
-                    label(ui, "Pratinjau", 14.0, tc.text);
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        label(ui, ThemeColors::label(proj.theme), 12.0, tc.muted);
-                    });
-                });
-                ui.add_space(12.0);
-                
-                // Preview card
-                let preview_rect = ui.allocate_exact_size(Vec2::new(total_w - 40.0, 140.0), egui::Sense::hover()).0;
-                ui.painter().rect_filled(preview_rect, Rounding::same(12.0), tc.surface);
-                ui.painter().rect_stroke(preview_rect, Rounding::same(12.0), Stroke::new(1.0, tc.border));
-                
-                // Preview content
-                ui.put(preview_rect.shrink(20.0).translate(Vec2::new(0.0, -10.0)), 
-                    egui::Label::new(RichText::new("FinFlow").size(24.0).color(tc.text).strong()));
-                ui.put(preview_rect.shrink(20.0).translate(Vec2::new(0.0, 22.0)), 
-                    egui::Label::new(RichText::new("Keuangan Pribadi").size(13.0).color(tc.muted)));
-                
-                // Color swatches
-                let swatch_y = preview_rect.top() + 90.0;
-                let swatches = [
-                    ("Background", tc.bg),
-                    ("Surface", tc.surface),
-                    ("Primary", tc.primary),
-                    ("Income", tc.income),
-                    ("Expense", tc.expense),
-                    ("Warning", tc.warning),
-                    ("Text", tc.text),
-                    ("Muted", tc.muted),
-                    ("Border", tc.border),
-                ];
-                let swatch_w = (total_w - 40.0 - 16.0) / 9.0;
-                for (i, (name, color)) in swatches.iter().enumerate() {
-                    let x = preview_rect.left() + 20.0 + i as f32 * (swatch_w + 2.0);
-                    let swatch_rect = Rect::from_min_size(Pos2::new(x, swatch_y), Vec2::new(swatch_w, 28.0));
-                    ui.painter().rect_filled(swatch_rect, Rounding::same(8.0), *color);
-                    ui.painter().text(
-                        swatch_rect.center(),
-                        egui::Align2::CENTER_CENTER,
-                        name,
-                        FontId::proportional(8.0),
-                        if *color == tc.bg || *color == tc.surface { tc.text } else { tc.white },
-                    );
-                }
-                
-                ui.add_space(160.0);
-                label(ui, "Perubahan tema berlaku instan di seluruh aplikasi.", 10.0, tc.muted);
-            }
-        }, &tc);
-    }
-    
-    fn render_theme_card(&mut self, ui: &mut egui::Ui, theme: Theme, card_w: f32) {
-        let Some(proj) = self.current_project().cloned() else { return };
-        let is_active = proj.theme == theme;
-        let tc = ThemeColors::from_theme(theme);
-        let response = ui.allocate_response(
-            Vec2::new(card_w, 64.0),
-            egui::Sense::click(),
-        );
-        let rect = response.rect;
-        let bg = if is_active { tc.primary_soft } else { tc.surface };
-        let stroke_color = if is_active { tc.primary } else { tc.border };
-        let stroke_width = if is_active { 2.5_f32 } else { 1.0_f32 };
-        
-        ui.painter().rect_stroke(rect, Rounding::same(12.0), Stroke::new(stroke_width, stroke_color));
-        ui.painter().rect_filled(rect.shrink(2.0), Rounding::same(10.0), bg);
-        
-        // Draw label text centered
-        let label_text = ThemeColors::label(theme);
-        let galley = ui.painter().layout_no_wrap(label_text.to_string(), FontId::proportional(14.0), tc.text);
-        ui.painter().galley(
-            rect.center() - galley.size() / 2.0,
-            galley,
-            tc.text,
-        );
-        
-        // Active indicator
-        if is_active {
-            let dot_rect = Rect::from_min_size(
-                Pos2::new(rect.right() - 28.0, rect.top() + 8.0),
-                Vec2::splat(18.0)
-            );
-            ui.painter().circle_filled(dot_rect.center(), 9.0, tc.primary);
-            paint_icon(ui.painter(), dot_rect.shrink(4.0), tc.white, Icon::Check, 1.4);
-        }
-        
-        if response.clicked() {
-            if let Some(proj_mut) = self.current_project_mut() {
-                proj_mut.theme = theme;
-                proj_mut.updated_at = crate::model::today_iso();
-                self.save_current();
-                self.refresh_theme();
-                crate::theme::install(ui.ctx(), &self.theme_colors);
-                self.toast("Tema diperbarui");
-            }
-        }
     }
 
     fn settings_payments(&mut self, ui: &mut egui::Ui, p: &Project) {

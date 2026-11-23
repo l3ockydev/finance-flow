@@ -60,7 +60,6 @@ pub enum SettingsSection {
     Income,
     Bills,
     Default,
-    Theme,
 }
 
 impl SettingsSection {
@@ -71,7 +70,6 @@ impl SettingsSection {
             SettingsSection::Income => "Pemasukan",
             SettingsSection::Bills => "Tagihan",
             SettingsSection::Default => "Default",
-            SettingsSection::Theme => "Tema",
         }
     }
 }
@@ -161,7 +159,6 @@ pub struct App {
     pub settings_section: SettingsSection,
     pub settings_expanded: bool,
     pub theme_colors: ThemeColors,
-    pub last_theme: Option<Theme>,
     pub logo_tex: Option<egui::TextureHandle>,
 }
 
@@ -191,7 +188,6 @@ impl App {
             settings_section: SettingsSection::Default,
             settings_expanded: false,
             theme_colors: ThemeColors::default(),
-            last_theme: None,
             logo_tex: None,
         };
         app.load_projects();
@@ -206,31 +202,10 @@ impl App {
             app.projects.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
             app.current = Some(app.projects[0].id.clone());
         }
-        app.refresh_theme();
-        app.last_theme = app.current_project().map(|p| p.theme);
         if let Some(version) = update_notice() {
             app.toast(&format!("FinFlow diperbarui ke v{version}."));
         }
         app
-    }
-
-    pub fn refresh_theme(&mut self) {
-        if let Some(proj) = self.current_project() {
-            self.theme_colors = ThemeColors::from_theme(proj.theme);
-        } else {
-            self.theme_colors = ThemeColors::default();
-        }
-    }
-
-    fn check_theme_change(&mut self, ctx: &egui::Context) {
-        let current_theme = self.current_project().map(|p| p.theme);
-        if current_theme != self.last_theme {
-            if let Some(proj) = self.current_project() {
-                self.theme_colors = ThemeColors::from_theme(proj.theme);
-                theme::install(ctx, &self.theme_colors);
-                self.last_theme = current_theme;
-            }
-        }
     }
 
     // -- persistence --------------------------------------------------------
@@ -817,7 +792,6 @@ impl App {
                         SettingsSection::Income,
                         SettingsSection::Bills,
                         SettingsSection::Default,
-                        SettingsSection::Theme,
                     ];
                     ui.scope(|ui| {
                         ui.spacing_mut().item_spacing.y = 2.0;
@@ -920,8 +894,6 @@ impl eframe::App for App {
         if escape && self.modal != Modal::None {
             self.close_modal();
         }
-
-        self.check_theme_change(ctx);
 
         self.top_bar(ctx);
         self.sidebar(ctx);

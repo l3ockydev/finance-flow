@@ -86,7 +86,6 @@ projects\
 - Analisis anggaran per kategori, rasio tabungan, komposisi pengeluaran.
 - Ekspor CSV, Excel (`.xls`), PDF; cetak via dialog Windows.
 - Proyek terpisah: buat baru, buka `.ff`, simpan salinan, hapus.
-- 7 tema warna (Default, Banking, DarkFinance, Minimal, Emerald, Amber, Violet).
 
 ### Shortcut keyboard
 
@@ -222,7 +221,6 @@ projects\
 - Budget analysis per category, savings ratio, and expense composition.
 - Export to CSV, Excel (`.xls`), and PDF; print via the Windows dialog.
 - Separate projects: create, open `.ff`, save a copy, delete.
-- 7 live themes (Default, Banking, DarkFinance, Minimal, Emerald, Amber, Violet).
 
 ### Keyboard shortcuts
 

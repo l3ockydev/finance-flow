@@ -113,43 +113,6 @@ pub struct Project {
     pub created_at: String,
     #[serde(default)]
     pub updated_at: String,
-    #[serde(default = "default_theme")]
-    pub theme: Theme,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Theme {
-    Default,
-    Banking,
-    DarkFinance,
-    Minimal,
-    Emerald,
-    Amber,
-    Violet,
-}
-
-impl Theme {
-    pub fn all() -> &'static [Theme] {
-        &[
-            Theme::Default,
-            Theme::Banking,
-            Theme::DarkFinance,
-            Theme::Minimal,
-            Theme::Emerald,
-            Theme::Amber,
-            Theme::Violet,
-        ]
-    }
-}
-
-impl Default for Theme {
-    fn default() -> Self {
-        Theme::Default
-    }
-}
-
-fn default_theme() -> Theme {
-    Theme::Default
 }
 
 fn default_version() -> u32 {
@@ -229,7 +192,6 @@ impl Project {
             income_categories: default_income_categories(),
             expense_categories: default_expense_categories(),
             bill_categories: default_bill_categories(),
-            theme: Theme::Default,
             created_at: now.clone(),
             updated_at: now,
         }
