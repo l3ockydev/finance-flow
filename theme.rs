@@ -304,6 +304,61 @@ pub fn field(ui: &mut egui::Ui, label_text: &str, value: &mut String, hint: &str
     ui.add_space(4.0);
 }
 
+/// Search field with a leading magnifier icon, matching the rest of the shell.
+pub fn search_box(
+    ui: &mut egui::Ui,
+    value: &mut String,
+    hint: &str,
+    tc: &ThemeColors,
+    width: f32,
+) -> Response {
+    ui.allocate_ui_with_layout(
+        Vec2::new(width, 36.0),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            egui::Frame::none()
+                .fill(tc.surface_high)
+                .rounding(Rounding::same(9.0))
+                .stroke(Stroke::new(1.0_f32, tc.border_soft))
+                .inner_margin(egui::Margin::symmetric(10.0, 7.0))
+                .show(ui, |ui| {
+                    ui.spacing_mut().item_spacing.x = 7.0;
+                    let (icon_rect, _) =
+                        ui.allocate_exact_size(Vec2::splat(16.0), egui::Sense::hover());
+                    paint_icon(ui.painter(), icon_rect, tc.muted, Icon::Search, 1.6);
+                    ui.add(
+                        egui::TextEdit::singleline(value)
+                            .hint_text(RichText::new(hint).color(tc.muted_dim))
+                            .desired_width(f32::INFINITY)
+                            .frame(false)
+                            .margin(Vec2::ZERO),
+                    );
+                })
+                .response
+        },
+    )
+    .inner
+}
+
+/// Scope that makes a stock `ComboBox` use FinFlow's dark surface tokens.
+pub fn styled_combo_scope<R>(ui: &mut egui::Ui, tc: &ThemeColors, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    ui.scope(|ui| {
+        let w = &mut ui.visuals_mut().widgets;
+        for visuals in [&mut w.inactive, &mut w.hovered, &mut w.active, &mut w.open] {
+            visuals.bg_fill = tc.surface_high;
+            visuals.weak_bg_fill = tc.surface_high;
+            visuals.rounding = Rounding::same(9.0);
+            visuals.bg_stroke = Stroke::new(1.0_f32, tc.border_soft);
+            visuals.fg_stroke.color = tc.text;
+        }
+        w.hovered.bg_fill = tc.surface_highest;
+        w.active.bg_fill = tc.surface_highest;
+        w.open.bg_fill = tc.surface_highest;
+        add(ui)
+    })
+    .inner
+}
+
 pub fn icon_badge(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, size: f32) {
     let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
     let painter = ui.painter();

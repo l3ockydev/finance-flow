@@ -107,6 +107,7 @@ impl App {
 
         card_pad(ui, 14.0, |ui| {
             ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 if chip(ui, "Semua Transaksi", self.filter_kind.is_none(), &tc).clicked() {
                     self.filter_kind = None;
                     self.page = 0;
@@ -124,35 +125,49 @@ impl App {
                 });
             });
 
-            ui.add_space(8.0);
+            ui.add_space(10.0);
 
             ui.horizontal(|ui| {
-                let search_w = (ui.available_width() - 190.0).max(160.0);
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.search)
-                        .hint_text(RichText::new("Cari keterangan, kategori, rekening...").color(tc.muted_dim))
-                        .desired_width(search_w)
-                        .margin(Vec2::new(10.0, 6.0)),
+                ui.spacing_mut().item_spacing.x = 8.0;
+                let filter_w = 176.0;
+                let search_w = (ui.available_width() - filter_w - 8.0).max(160.0);
+                search_box(
+                    ui,
+                    &mut self.search,
+                    "Cari keterangan, kategori, rekening...",
+                    &tc,
+                    search_w,
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut categories: Vec<String> = p.transactions.iter().map(|t| t.category.clone()).collect();
                     categories.sort();
                     categories.dedup();
-                    egui::ComboBox::from_id_source("filter_category")
-                        .selected_text(self.filter_category.clone().unwrap_or_else(|| "Semua Kategori".into()))
-                        .width(170.0)
-                        .show_ui(ui, |ui| {
-                            if ui.selectable_label(self.filter_category.is_none(), "Semua Kategori").clicked() {
-                                self.filter_category = None;
-                                self.page = 0;
-                            }
-                            for cat in &categories {
-                                if ui.selectable_label(self.filter_category.as_deref() == Some(cat.as_str()), cat).clicked() {
-                                    self.filter_category = Some(cat.clone());
+                    styled_combo_scope(ui, &tc, |ui| {
+                        egui::ComboBox::from_id_source("filter_category")
+                            .selected_text(
+                                RichText::new(
+                                    self.filter_category
+                                        .clone()
+                                        .unwrap_or_else(|| "Semua Kategori".into()),
+                                )
+                                .size(12.0)
+                                .color(tc.text),
+                            )
+                            .width(filter_w)
+                            .height(36.0)
+                            .show_ui(ui, |ui| {
+                                if ui.selectable_label(self.filter_category.is_none(), "Semua Kategori").clicked() {
+                                    self.filter_category = None;
                                     self.page = 0;
                                 }
-                            }
-                        });
+                                for cat in &categories {
+                                    if ui.selectable_label(self.filter_category.as_deref() == Some(cat.as_str()), cat).clicked() {
+                                        self.filter_category = Some(cat.clone());
+                                        self.page = 0;
+                                    }
+                                }
+                            });
+                    });
                 });
             });
         }, &tc);
