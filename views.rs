@@ -227,13 +227,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                page_heading(
-                    ui,
-                    "Ringkasan",
-                    "Dashboard",
-                    "Kondisi keuangan proyek Anda bulan ini.",
-                    &tc,
-                );
+                page_heading(ui, "Ringkasan", "Dashboard", &tc);
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {

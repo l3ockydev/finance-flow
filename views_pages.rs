@@ -17,13 +17,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                page_heading(
-                    ui,
-                    "Ledger",
-                    "Buku Transaksi",
-                    "Seluruh catatan pemasukan dan pengeluaran proyek ini.",
-                    &tc,
-                );
+                page_heading(ui, "Ledger", "Buku Transaksi", &tc);
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {
@@ -239,13 +233,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                page_heading(
-                    ui,
-                    "Liabilitas",
-                    "Kelola Tagihan",
-                    "Pantau tagihan rutin, jatuh tempo, dan status pembayaran.",
-                    &tc,
-                );
+                page_heading(ui, "Liabilitas", "Kelola Tagihan", &tc);
             });
         });
 
@@ -390,13 +378,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                page_heading(
-                    ui,
-                    "Insight",
-                    "Analisis & Anggaran",
-                    "Kendali belanja, rasio tabungan, dan komposisi pengeluaran.",
-                    &tc,
-                );
+                page_heading(ui, "Insight", "Analisis & Anggaran", &tc);
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if secondary_button(ui, "Ekspor Laporan", &tc).clicked() {
@@ -564,13 +546,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                page_heading(
-                    ui,
-                    "Preferensi",
-                    "Pengaturan",
-                    &format!("Bagian: {}", self.settings_section.label()),
-                    &tc,
-                );
+                page_heading(ui, "Preferensi", "Pengaturan", &tc);
             });
         });
 

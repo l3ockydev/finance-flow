@@ -235,14 +235,10 @@ pub fn title(ui: &mut egui::Ui, text: &str, tc: &ThemeColors) {
     ui.label(RichText::new(text).size(26.0).color(tc.text).strong());
 }
 
-pub fn page_heading(ui: &mut egui::Ui, eyebrow: &str, heading: &str, subtitle: &str, tc: &ThemeColors) {
+pub fn page_heading(ui: &mut egui::Ui, eyebrow: &str, heading: &str, tc: &ThemeColors) {
     ui.label(RichText::new(eyebrow.to_uppercase()).size(10.0).color(tc.primary_light).strong());
     ui.add_space(4.0);
     title(ui, heading, tc);
-    if !subtitle.is_empty() {
-        ui.add_space(4.0);
-        label(ui, subtitle, 12.0, tc.muted);
-    }
 }
 
 pub fn section_title(ui: &mut egui::Ui, text: &str, subtitle: &str, tc: &ThemeColors) {
