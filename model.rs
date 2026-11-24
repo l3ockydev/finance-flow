@@ -101,7 +101,7 @@ pub struct Project {
     pub bills: Vec<Bill>,
     #[serde(default)]
     pub budgets: Vec<Budget>,
-    #[serde(default)]
+    #[serde(default = "default_bank_accounts")]
     pub bank_accounts: Vec<String>,
     #[serde(default = "default_income_categories")]
     pub income_categories: Vec<String>,

@@ -160,8 +160,8 @@ impl Default for Form {
     fn default() -> Self {
         Self {
             amount: String::new(),
-            category: "Gaji & Bonus".to_string(),
-            account: "BCA Prioritas".to_string(),
+            category: String::new(),
+            account: String::new(),
             note: String::new(),
             date: today_iso(),
             time: "09:00".to_string(),
@@ -691,7 +691,7 @@ impl App {
             .category_options(category_kind)
             .into_iter()
             .next()
-            .unwrap_or_else(|| "Lainnya".to_string());
+            .unwrap_or_default();
         let account = self
             .account_options()
             .into_iter()
@@ -705,7 +705,7 @@ impl App {
             .category_options(2)
             .into_iter()
             .next()
-            .unwrap_or_else(|| "Lainnya".to_string());
+            .unwrap_or_default();
         self.form.reset_bill(category);
     }
 

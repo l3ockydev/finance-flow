@@ -75,8 +75,12 @@ fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
 fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
     ui.label(egui::RichText::new("KATEGORI").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(5.0);
+    if options.is_empty() {
+        ui.label(RichText::new("Belum ada kategori — atur di Pengaturan").size(11.0).color(tc.muted_dim));
+        return;
+    }
     styled_combo_scope(ui, tc, |ui| {
-        egui::ComboBox::from_id_source(format!("cat_{}", value))
+        egui::ComboBox::from_id_source(egui::Id::new("finflow_category_picker"))
             .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
             .width(ui.available_width())
             .height(36.0)
@@ -91,8 +95,12 @@ fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: 
 fn account_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
     ui.label(egui::RichText::new("AKUN BANK").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(5.0);
+    if options.is_empty() {
+        ui.label(RichText::new("Belum ada akun bank — atur di Pengaturan").size(11.0).color(tc.muted_dim));
+        return;
+    }
     styled_combo_scope(ui, tc, |ui| {
-        egui::ComboBox::from_id_source(format!("acc_{}", value))
+        egui::ComboBox::from_id_source(egui::Id::new("finflow_account_picker"))
             .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
             .width(ui.available_width())
             .height(36.0)
@@ -155,27 +163,23 @@ fn evidence_row(ui: &mut egui::Ui, app: &mut App) {
 
 impl App {
     /// Category options for 0 = income, 1 = expense, 2 = bill.
+    /// Sumber tunggalnya adalah pengaturan proyek aktif. Daftar yang sengaja
+    /// dikosongkan di Pengaturan harus tetap kosong di popup — jangan diisi
+    /// ulang dengan kategori bawaan.
     pub(crate) fn category_options(&self, kind: u8) -> Vec<String> {
-        let list = self.current_project().map(|p| match kind {
-            0 => p.income_categories.clone(),
-            1 => p.expense_categories.clone(),
-            _ => p.bill_categories.clone(),
-        });
-        match list {
-            Some(items) if !items.is_empty() => items,
-            _ => match kind {
-                0 => default_income_categories(),
-                1 => default_expense_categories(),
-                _ => default_bill_categories(),
-            },
-        }
+        self.current_project()
+            .map(|p| match kind {
+                0 => p.income_categories.clone(),
+                1 => p.expense_categories.clone(),
+                _ => p.bill_categories.clone(),
+            })
+            .unwrap_or_default()
     }
 
     pub(crate) fn account_options(&self) -> Vec<String> {
-        match self.current_project() {
-            Some(p) if !p.bank_accounts.is_empty() => p.bank_accounts.clone(),
-            _ => default_bank_accounts(),
-        }
+        self.current_project()
+            .map(|p| p.bank_accounts.clone())
+            .unwrap_or_default()
     }
 
     pub fn show_modal(&mut self, ctx: &egui::Context) {
@@ -850,15 +854,15 @@ impl App {
                             };
                             match t {
                                 Tab::Income => {
-                                    self.form.category = self.category_options(0).first().cloned().unwrap_or_else(|| "Lainnya".into());
+                                    self.form.category = self.category_options(0).first().cloned().unwrap_or_default();
                                     self.form.name.clear();
                                 }
                                 Tab::Expense => {
-                                    self.form.category = self.category_options(1).first().cloned().unwrap_or_else(|| "Lainnya".into());
+                                    self.form.category = self.category_options(1).first().cloned().unwrap_or_default();
                                     self.form.name.clear();
                                 }
                                 Tab::Bill => {
-                                    self.form.category = self.category_options(2).first().cloned().unwrap_or_else(|| "Lainnya".into());
+                                    self.form.category = self.category_options(2).first().cloned().unwrap_or_default();
                                     self.form.name.clear();
                                     self.form.due_date = shift_iso(&today_iso(), 7);
                                 }
