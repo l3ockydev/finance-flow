@@ -118,7 +118,7 @@ projects\
 - Buku transaksi: tambah/ubah/hapus, pencarian, filter, paginasi.
 - Bukti gambar PNG/JPEG/WebP ≤ 5 MB, tersimpan di dalam file proyek.
 - Tagihan dengan status dan aksi “Tandai Lunas”.
-- Analisis anggaran per kategori, rasio tabungan, komposisi pengeluaran.
+- Analisis anggaran per kategori, rasio tabungan, komposisi pengeluaran. Anggaran diatur di **Pengaturan → Anggaran**; proyek baru mulai tanpa anggaran.
 - Ekspor CSV, Excel (`.xls`), PDF; cetak via dialog Windows.
 - Proyek terpisah: buat baru, buka `.ff`, simpan salinan, hapus.
 
@@ -262,7 +262,7 @@ projects\
 - Transaction ledger: add/edit/delete, search, filters, and pagination.
 - Image evidence (PNG/JPEG/WebP, ≤ 5 MB) stored inside the project file.
 - Bills with statuses and a “Mark as Paid” action.
-- Budget analysis per category, savings ratio, and expense composition.
+- Budget analysis per category, savings ratio, and expense composition. Budgets are managed in **Settings → Budget**; new projects start with no budgets.
 - Export to CSV, Excel (`.xls`), and PDF; print via the Windows dialog.
 - Separate projects: create, open `.ff`, save a copy, delete.
 

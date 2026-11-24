@@ -182,12 +182,7 @@ impl Project {
             currency: "IDR".to_string(),
             transactions: Vec::new(),
             bills: Vec::new(),
-            budgets: vec![
-                Budget { category: "Kebutuhan Pokok".into(), limit: 4_000_000.0 },
-                Budget { category: "Transportasi".into(), limit: 1_000_000.0 },
-                Budget { category: "Hiburan".into(), limit: 800_000.0 },
-                Budget { category: "Investasi".into(), limit: 2_500_000.0 },
-            ],
+            budgets: Vec::new(),
             bank_accounts: default_bank_accounts(),
             income_categories: default_income_categories(),
             expense_categories: default_expense_categories(),

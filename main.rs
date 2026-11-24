@@ -60,6 +60,7 @@ pub enum SettingsSection {
     Expenses,
     Income,
     Bills,
+    Budget,
     Default,
     Privacy,
 }
@@ -71,6 +72,7 @@ impl SettingsSection {
             SettingsSection::Expenses => "Pengeluaran",
             SettingsSection::Income => "Pemasukan",
             SettingsSection::Bills => "Tagihan",
+            SettingsSection::Budget => "Anggaran",
             SettingsSection::Default => "Default",
             SettingsSection::Privacy => "Privasi & Update",
         }
@@ -150,6 +152,8 @@ pub struct Form {
     pub format: ExportFormat,
     pub bank_name: String,
     pub settings_item: String,
+    pub budget_category: String,
+    pub budget_limit: String,
 }
 
 impl Default for Form {
@@ -170,6 +174,8 @@ impl Default for Form {
             format: ExportFormat::Pdf,
             bank_name: String::new(),
             settings_item: String::new(),
+            budget_category: String::new(),
+            budget_limit: String::new(),
         }
     }
 }
@@ -1019,6 +1025,7 @@ impl App {
                         SettingsSection::Expenses,
                         SettingsSection::Income,
                         SettingsSection::Bills,
+                        SettingsSection::Budget,
                         SettingsSection::Default,
                         SettingsSection::Privacy,
                     ];

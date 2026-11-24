@@ -558,7 +558,149 @@ impl App {
             SettingsSection::Income => self.settings_categories(ui, &p, SettingsSection::Income),
             SettingsSection::Expenses => self.settings_categories(ui, &p, SettingsSection::Expenses),
             SettingsSection::Bills => self.settings_categories(ui, &p, SettingsSection::Bills),
+            SettingsSection::Budget => self.settings_budget(ui, &p),
             SettingsSection::Privacy => self.settings_privacy(ui),
+        }
+    }
+
+    fn settings_budget(&mut self, ui: &mut egui::Ui, p: &Project) {
+        let tc = self.theme_colors;
+        let total_w = ui.available_width();
+        let left_w = ((total_w - 16.0) * 0.62).floor();
+        let right_w = total_w - left_w - 16.0;
+        let mut remove: Option<usize> = None;
+        let mut edits: Vec<(usize, String, String)> = Vec::new();
+        let mut add = false;
+
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            ui.allocate_ui_with_layout(
+                Vec2::new(left_w, 520.0),
+                egui::Layout::top_down(egui::Align::Min),
+                |ui| {
+                    card(ui, |ui| {
+                        section_title(ui, "Anggaran Kategori", "Batas pengeluaran per kategori", &tc);
+                        ui.add_space(12.0);
+                        if p.budgets.is_empty() {
+                            label(ui, "Belum ada anggaran. Tambahkan batas pengeluaran pertama Anda.", 11.0, tc.muted);
+                            ui.add_space(10.0);
+                        }
+                        for (idx, budget) in p.budgets.iter().enumerate() {
+                            let mut category = budget.category.clone();
+                            let mut limit_text = format!("{:.0}", budget.limit);
+                            soft_panel(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.add(
+                                        egui::TextEdit::singleline(&mut category)
+                                            .id_source(format!("budget_cat_{idx}"))
+                                            .desired_width(160.0)
+                                            .margin(Vec2::new(10.0, 7.0)),
+                                    );
+                                    ui.add(
+                                        egui::TextEdit::singleline(&mut limit_text)
+                                            .id_source(format!("budget_limit_{idx}"))
+                                            .desired_width(120.0)
+                                            .margin(Vec2::new(10.0, 7.0)),
+                                    );
+                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                        if icon_button(ui, Icon::Trash, "Hapus anggaran", &tc).clicked() {
+                                            remove = Some(idx);
+                                        }
+                                    });
+                                });
+                            }, &tc);
+                            if category.trim() != budget.category || parse_amount(&limit_text) != budget.limit {
+                                edits.push((idx, category.trim().to_string(), limit_text));
+                            }
+                            ui.add_space(6.0);
+                        }
+                        ui.add_space(10.0);
+                        divider(ui, &tc);
+                        ui.add_space(10.0);
+                        label(ui, "ANGGARAN BARU", 10.0, tc.muted_dim);
+                        ui.add_space(5.0);
+                        ui.horizontal(|ui| {
+                            ui.add(
+                                egui::TextEdit::singleline(&mut self.form.budget_category)
+                                    .hint_text(RichText::new("Kategori").color(tc.muted_dim))
+                                    .desired_width(160.0)
+                                    .margin(Vec2::new(10.0, 7.0)),
+                            );
+                            ui.add(
+                                egui::TextEdit::singleline(&mut self.form.budget_limit)
+                                    .hint_text(RichText::new("Nominal").color(tc.muted_dim))
+                                    .desired_width(120.0)
+                                    .margin(Vec2::new(10.0, 7.0)),
+                            );
+                            if primary_button(ui, "Tambah", &tc).clicked() {
+                                add = true;
+                            }
+                        });
+                    }, &tc);
+                },
+            );
+            ui.add_space(16.0);
+            ui.allocate_ui_with_layout(
+                Vec2::new(right_w, 520.0),
+                egui::Layout::top_down(egui::Align::Min),
+                |ui| {
+                    card(ui, |ui| {
+                        section_title(ui, "Cara Kerja", "", &tc);
+                        ui.add_space(12.0);
+                        label(ui, "Anggaran dipakai untuk mengukur realisasi pengeluaran per kategori di halaman Analisis & Anggaran.", 11.0, tc.muted);
+                        ui.add_space(10.0);
+                        divider(ui, &tc);
+                        ui.add_space(10.0);
+                        let total: f64 = p.budgets.iter().map(|b| b.limit).sum();
+                        ui.horizontal(|ui| {
+                            label(ui, "Total anggaran", 10.5, tc.muted);
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                label(ui, &format_rp(total), 12.0, tc.text);
+                            });
+                        });
+                    }, &tc);
+                },
+            );
+        });
+
+        let had_edits = !edits.is_empty();
+        if let Some(idx) = remove {
+            if let Some(proj) = self.current_project_mut() {
+                if idx < proj.budgets.len() {
+                    proj.budgets.remove(idx);
+                }
+                proj.updated_at = today_iso();
+            }
+        }
+        for (idx, category, limit_text) in edits {
+            let limit = parse_amount(&limit_text);
+            if let Some(proj) = self.current_project_mut() {
+                if let Some(budget) = proj.budgets.get_mut(idx) {
+                    budget.category = category;
+                    budget.limit = limit;
+                }
+                proj.updated_at = today_iso();
+            }
+        }
+        if add {
+            let category = self.form.budget_category.trim().to_string();
+            let limit = parse_amount(&self.form.budget_limit);
+            if category.is_empty() || limit <= 0.0 {
+                self.toast("Kategori dan nominal anggaran wajib diisi.");
+                add = false;
+            } else if let Some(proj) = self.current_project_mut() {
+                if let Some(existing) = proj.budgets.iter_mut().find(|b| b.category == category) {
+                    existing.limit = limit;
+                } else {
+                    proj.budgets.push(Budget { category, limit });
+                }
+                proj.updated_at = today_iso();
+                self.form.budget_category.clear();
+                self.form.budget_limit.clear();
+            }
+        }
+        if remove.is_some() || had_edits || add {
+            self.save_current();
         }
     }
 
