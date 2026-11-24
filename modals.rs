@@ -7,7 +7,13 @@ use base64::Engine;
 use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
 
 pub fn dim(ctx: &egui::Context) {
-    let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Middle, egui::Id::new("finflow_dim")));
+    // Layer ini harus di atas UI utama (Background) tetapi di bawah jendela
+    // modal (Middle). Kalau pakai Order::Middle, urutan gambar bisa tertukar
+    // sehingga modal ikut tergelap.
+    let painter = ctx.layer_painter(egui::LayerId::new(
+        egui::Order::PanelResizeLine,
+        egui::Id::new("finflow_dim"),
+    ));
     painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(45));
 }
 
@@ -83,7 +89,9 @@ fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: 
         egui::ComboBox::from_id_source(egui::Id::new("finflow_category_picker"))
             .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
             .width(ui.available_width())
-            .height(36.0)
+            // `.height()` adalah batas tinggi MENU, bukan tinggi tombol.
+            // 36 px cuma memuat ~2 pilihan; beri ruang untuk semua kategori.
+            .height(260.0)
             .show_ui(ui, |ui| {
                 for option in options {
                     ui.selectable_value(value, option.to_string(), *option);
@@ -103,7 +111,7 @@ fn account_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &
         egui::ComboBox::from_id_source(egui::Id::new("finflow_account_picker"))
             .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
             .width(ui.available_width())
-            .height(36.0)
+            .height(260.0)
             .show_ui(ui, |ui| {
                 for option in options {
                     ui.selectable_value(value, option.to_string(), *option);
