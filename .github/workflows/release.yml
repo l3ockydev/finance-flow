@@ -43,3 +43,25 @@ jobs:
         with:
           files: finance_flow-windows-x86_64.zip
           generate_release_notes: true
+          body: |
+            ## ⬇️ Unduh / Download
+
+            **[FinFlow untuk Windows — ZIP](https://github.com/l3ockydev/finance-flow/releases/latest/download/finance_flow-windows-x86_64.zip)** ·
+            **[FinFlow for Windows — ZIP](https://github.com/l3ockydev/finance-flow/releases/latest/download/finance_flow-windows-x86_64.zip)**
+
+            Ekstrak lalu jalankan `finance_flow.exe`. Tanpa akun, tanpa internet, tanpa Rust.  
+            Extract and run `finance_flow.exe`. No account, no internet, no Rust.
+
+            Instal otomatis + shortcut Start Menu / Automatic install + Start Menu shortcut:
+
+            ```powershell
+            irm https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 | iex
+            ```
+
+            > Windows mungkin menampilkan SmartScreen karena executable belum ditandatangani:
+            > **More info → Run anyway**.  
+            > Windows may show SmartScreen because the executable is unsigned:
+            > **More info → Run anyway**.
+
+            Detail lengkap / Full details: [README](https://github.com/l3ockydev/finance-flow#readme) ·
+            [Kebijakan Privasi / Privacy](https://github.com/l3ockydev/finance-flow/blob/main/PRIVACY.md)

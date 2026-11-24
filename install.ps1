@@ -8,6 +8,9 @@ Mengunduh ZIP rilis terbaru dari GitHub Releases, mengekstraknya ke
 
 .EXAMPLE
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Repo owner/finance-flow
+
+.EXAMPLE
+irm https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 | iex
 #>
 param(
     [string]$Repo = "",
@@ -18,12 +21,15 @@ $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # --- Tentukan owner/repo -----------------------------------------------------
-if (-not $Repo) {
+# Default ke repo resmi agar skrip bisa dijalankan langsung dari URL
+# (tanpa clone), mis. via: irm https://raw.githubusercontent.com/.../install.ps1 | iex
+if (-not $Repo -and $PSScriptRoot) {
     $remote = & git -C $PSScriptRoot remote get-url origin 2>$null
     if ($LASTEXITCODE -eq 0 -and $remote -match 'github\.com[:/]([^/]+)/([^/\s]+?)(?:\.git)?\s*$') {
         $Repo = "$($Matches[1])/$($Matches[2])"
     }
 }
+if (-not $Repo) { $Repo = "l3ockydev/finance-flow" }
 if ($Repo -notmatch '^[^/\s]+/[^/\s]+$') {
     throw "Repo GitHub belum diketahui / GitHub repo unknown.`nJalankan / Run: .\install.ps1 -Repo owner/repo (mis. budi/finance-flow)"
 }
