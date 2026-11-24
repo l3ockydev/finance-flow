@@ -237,7 +237,6 @@ impl App {
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {
-                    self.form.reset_entry(TxKind::Income);
                     self.open_modal(Modal::AddTransaction);
                 }
             });

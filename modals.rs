@@ -155,7 +155,7 @@ fn evidence_row(ui: &mut egui::Ui, app: &mut App) {
 
 impl App {
     /// Category options for 0 = income, 1 = expense, 2 = bill.
-    fn category_options(&self, kind: u8) -> Vec<String> {
+    pub(crate) fn category_options(&self, kind: u8) -> Vec<String> {
         let list = self.current_project().map(|p| match kind {
             0 => p.income_categories.clone(),
             1 => p.expense_categories.clone(),
@@ -171,7 +171,7 @@ impl App {
         }
     }
 
-    fn account_options(&self) -> Vec<String> {
+    pub(crate) fn account_options(&self) -> Vec<String> {
         match self.current_project() {
             Some(p) if !p.bank_accounts.is_empty() => p.bank_accounts.clone(),
             _ => default_bank_accounts(),
@@ -767,6 +767,26 @@ impl App {
         let mut save = false;
         let mut close = false;
 
+        // Header (termasuk tombol tutup) harus menjadi elemen pertama di modal,
+        // sebelum bilah tab, agar tombol "X" berada di pojok kanan atas.
+        let (heading, subtitle, accent, accent_soft, icon) = match tab {
+            Tab::Income => (
+                if self.editing_tx.is_some() { "Ubah Pemasukan" } else { "Catat Pemasukan Baru" },
+                "Catat gaji, dividen, pelunasan proyek, atau pendapatan lain.",
+                tc.income, tc.income_soft, Icon::ArrowDown,
+            ),
+            Tab::Expense => (
+                if self.editing_tx.is_some() { "Ubah Pengeluaran" } else { "Catat Pengeluaran Baru" },
+                "Catat belanja, tagihan rutin, transportasi, dan operasional harian.",
+                tc.expense, tc.expense_soft, Icon::ArrowUp,
+            ),
+            Tab::Bill => (
+                "Tambah Tagihan",
+                "Catat kewajiban rutin dan tanggal jatuh temponya.",
+                tc.warning, tc.warning_soft, Icon::Bell,
+            ),
+        };
+
         egui::Window::new("add_transaction_modal")
             .title_bar(false)
             .default_width(580.0)
@@ -776,6 +796,9 @@ impl App {
             .movable(false)
             .frame(modal_frame(&tc))
             .show(ctx, |ui| {
+                if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
+                    close = true;
+                }
                 ui.horizontal(|ui| {
                     let tabs = [
                         (Tab::Income, "Pemasukan", tc.income, tc.income_soft, Icon::ArrowDown),
@@ -847,14 +870,6 @@ impl App {
 
                 match tab {
                     Tab::Income => {
-                        let (heading, subtitle, accent, accent_soft, icon) = (
-                            if self.editing_tx.is_some() { "Ubah Pemasukan" } else { "Catat Pemasukan Baru" },
-                            "Catat gaji, dividen, pelunasan proyek, atau pendapatan lain.",
-                            tc.income, tc.income_soft, Icon::ArrowDown,
-                        );
-                        if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
-                            close = true;
-                        }
                         amount_field(ui, &mut self.form.amount, &tc);
                         let cats = self.category_options(0);
                         let cat_opts: Vec<&str> = cats.iter().map(|s| s.as_str()).collect();
@@ -890,14 +905,6 @@ impl App {
                         evidence_row(ui, self);
                     }
                     Tab::Expense => {
-                        let (heading, subtitle, accent, accent_soft, icon) = (
-                            if self.editing_tx.is_some() { "Ubah Pengeluaran" } else { "Catat Pengeluaran Baru" },
-                            "Catat belanja, tagihan rutin, transportasi, dan operasional harian.",
-                            tc.expense, tc.expense_soft, Icon::ArrowUp,
-                        );
-                        if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
-                            close = true;
-                        }
                         amount_field(ui, &mut self.form.amount, &tc);
                         let cats = self.category_options(1);
                         let cat_opts: Vec<&str> = cats.iter().map(|s| s.as_str()).collect();
@@ -933,14 +940,6 @@ impl App {
                         evidence_row(ui, self);
                     }
                     Tab::Bill => {
-                        let (heading, subtitle, accent, accent_soft, icon) = (
-                            "Tambah Tagihan",
-                            "Catat kewajiban rutin dan tanggal jatuh temponya.",
-                            tc.warning, tc.warning_soft, Icon::Bell,
-                        );
-                        if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
-                            close = true;
-                        }
                         field(ui, "NAMA TAGIHAN", &mut self.form.name, "Contoh: IndiHome Fiber 100M", &tc);
                         amount_field(ui, &mut self.form.amount, &tc);
                         let cats = self.category_options(2);

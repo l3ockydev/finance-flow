@@ -175,26 +175,23 @@ impl Default for Form {
 }
 
 impl Form {
-    fn reset_entry(&mut self, kind: TxKind) {
+    fn reset_entry(&mut self, _kind: TxKind, category: String, account: String) {
         self.amount.clear();
         self.note.clear();
         self.date = today_iso();
         self.time = "09:00".to_string();
-        self.category = match kind {
-            TxKind::Income => "Gaji & Bonus".to_string(),
-            TxKind::Expense => "Kebutuhan Pokok".to_string(),
-        };
-        self.account = "BCA Prioritas".to_string();
+        self.category = category;
+        self.account = account;
         self.image = None;
         self.image_mime = None;
         self.image_name = None;
     }
 
-    fn reset_bill(&mut self) {
+    fn reset_bill(&mut self, category: String) {
         self.name.clear();
         self.amount.clear();
         self.due_date = shift_iso(&today_iso(), 7);
-        self.category = "Internet".to_string();
+        self.category = category;
     }
 }
 
@@ -680,22 +677,48 @@ impl App {
 
     // -- modal & toast ------------------------------------------------------
 
+    /// Isi ulang form transaksi dengan kategori & akun dari pengaturan proyek,
+    /// bukan nilai hardcode. Dipakai setiap kali popup dibuka.
+    fn reset_entry_form(&mut self, kind: TxKind) {
+        let category_kind = if kind == TxKind::Income { 0 } else { 1 };
+        let category = self
+            .category_options(category_kind)
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| "Lainnya".to_string());
+        let account = self
+            .account_options()
+            .into_iter()
+            .next()
+            .unwrap_or_default();
+        self.form.reset_entry(kind, category, account);
+    }
+
+    fn reset_bill_form(&mut self) {
+        let category = self
+            .category_options(2)
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| "Lainnya".to_string());
+        self.form.reset_bill(category);
+    }
+
     pub fn open_modal(&mut self, modal: Modal) {
         match modal {
             Modal::AddTransaction => {
                 self.editing_tx = None;
                 self.add_tx_tab = 0;
-                self.form.reset_entry(TxKind::Income);
+                self.reset_entry_form(TxKind::Income);
             }
             Modal::Income => {
-                self.form.reset_entry(TxKind::Income);
+                self.reset_entry_form(TxKind::Income);
                 self.editing_tx = None;
             }
             Modal::Expense => {
-                self.form.reset_entry(TxKind::Expense);
+                self.reset_entry_form(TxKind::Expense);
                 self.editing_tx = None;
             }
-            Modal::Bill => self.form.reset_bill(),
+            Modal::Bill => self.reset_bill_form(),
             Modal::NewProject => {
                 self.form.name.clear();
                 self.form.owner = self.current_project().map(|p| p.owner.clone()).unwrap_or_default();
@@ -1127,7 +1150,6 @@ impl eframe::App for App {
             self.toast("Proyek disimpan.");
         }
         if new_tx && self.current.is_some() {
-            self.form.reset_entry(TxKind::Income);
             self.open_modal(Modal::AddTransaction);
         }
         if export && self.current.is_some() {

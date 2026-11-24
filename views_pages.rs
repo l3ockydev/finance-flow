@@ -27,7 +27,6 @@ impl App {
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {
-                    self.form.reset_entry(TxKind::Income);
                     self.open_modal(Modal::AddTransaction);
                 }
                 if secondary_button(ui, "Ekspor CSV / Excel / PDF", &tc).clicked() {
@@ -844,6 +843,9 @@ impl App {
                 self.form.bank_name.clear();
             }
         }
+        if to_remove.is_some() || add {
+            self.save_current();
+        }
     }
 
     fn settings_categories(&mut self, ui: &mut egui::Ui, p: &Project, section: SettingsSection) {
@@ -944,6 +946,9 @@ impl App {
                 }
                 self.form.settings_item.clear();
             }
+        }
+        if remove.is_some() || add {
+            self.save_current();
         }
     }
 
