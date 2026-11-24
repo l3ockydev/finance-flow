@@ -113,43 +113,6 @@ pub struct Project {
     pub created_at: String,
     #[serde(default)]
     pub updated_at: String,
-    #[serde(default = "default_theme")]
-    pub theme: Theme,
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Theme {
-    Default,
-    Banking,
-    DarkFinance,
-    Minimal,
-    Emerald,
-    Amber,
-    Violet,
-}
-
-impl Theme {
-    pub fn all() -> &'static [Theme] {
-        &[
-            Theme::Default,
-            Theme::Banking,
-            Theme::DarkFinance,
-            Theme::Minimal,
-            Theme::Emerald,
-            Theme::Amber,
-            Theme::Violet,
-        ]
-    }
-}
-
-impl Default for Theme {
-    fn default() -> Self {
-        Theme::Default
-    }
-}
-
-fn default_theme() -> Theme {
-    Theme::Default
 }
 
 fn default_version() -> u32 {
@@ -219,17 +182,11 @@ impl Project {
             currency: "IDR".to_string(),
             transactions: Vec::new(),
             bills: Vec::new(),
-            budgets: vec![
-                Budget { category: "Kebutuhan Pokok".into(), limit: 4_000_000.0 },
-                Budget { category: "Transportasi".into(), limit: 1_000_000.0 },
-                Budget { category: "Hiburan".into(), limit: 800_000.0 },
-                Budget { category: "Investasi".into(), limit: 2_500_000.0 },
-            ],
+            budgets: Vec::new(),
             bank_accounts: default_bank_accounts(),
             income_categories: default_income_categories(),
             expense_categories: default_expense_categories(),
             bill_categories: default_bill_categories(),
-            theme: Theme::Default,
             created_at: now.clone(),
             updated_at: now,
         }
@@ -636,7 +593,7 @@ pub fn export_pdf(project: &Project, path: &Path) -> io::Result<()> {
     let mut offsets: Vec<usize> = vec![0; 4 + page_count * 2];
     out.extend_from_slice(b"%PDF-1.4\n");
 
-    let mut push_obj = |out: &mut Vec<u8>, offsets: &mut Vec<usize>, number: usize, body: String| {
+    let push_obj = |out: &mut Vec<u8>, offsets: &mut Vec<usize>, number: usize, body: String| {
         offsets[number] = out.len();
         out.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", number, body).as_bytes());
     };

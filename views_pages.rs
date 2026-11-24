@@ -1,10 +1,10 @@
 //! Transactions ledger, bills, analysis, settings, and empty state.
 
-use crate::model::{*, Theme};
+use crate::model::*;
 use crate::theme::*;
 use crate::views::{bill_icon, category_icon, table_header, tx_row, widths, RowAction};
 use crate::{App, Modal, SettingsSection};
-use eframe::egui::{self, Color32, FontId, Pos2, Rect, RichText, Rounding, Stroke, Vec2};
+use eframe::egui::{self, Color32, Pos2, Rect, RichText, Rounding, Stroke, Vec2};
 
 impl App {
     pub fn transactions(&mut self, ui: &mut egui::Ui) {
@@ -17,13 +17,10 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Buku Transaksi", &tc);
-                ui.add_space(2.0);
-                label(ui, "Seluruh catatan pemasukan dan pengeluaran proyek ini.", 11.5, tc.muted);
+                page_heading(ui, "Ledger", "Buku Transaksi", &tc);
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {
-                    self.form.reset_entry(TxKind::Income);
                     self.open_modal(Modal::AddTransaction);
                 }
                 if secondary_button(ui, "Ekspor CSV / Excel / PDF", &tc).clicked() {
@@ -57,7 +54,7 @@ impl App {
         let width = ((ui.available_width() - gap * 2.0) / 3.0).floor().max(200.0);
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "PEMASUKAN TERFILTER",
                     value: &format_rp(income),
@@ -72,7 +69,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "PENGELUARAN TERFILTER",
                     value: &format_rp(expense),
@@ -87,7 +84,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "ARUS KAS BERSIH",
                     value: &format_rp(net),
@@ -107,6 +104,7 @@ impl App {
 
         card_pad(ui, 14.0, |ui| {
             ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 if chip(ui, "Semua Transaksi", self.filter_kind.is_none(), &tc).clicked() {
                     self.filter_kind = None;
                     self.page = 0;
@@ -124,35 +122,49 @@ impl App {
                 });
             });
 
-            ui.add_space(8.0);
+            ui.add_space(10.0);
 
             ui.horizontal(|ui| {
-                let search_w = (ui.available_width() - 190.0).max(160.0);
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.search)
-                        .hint_text(RichText::new("Cari keterangan, kategori, rekening...").color(tc.muted_dim))
-                        .desired_width(search_w)
-                        .margin(Vec2::new(10.0, 6.0)),
+                ui.spacing_mut().item_spacing.x = 8.0;
+                let filter_w = 176.0;
+                let search_w = (ui.available_width() - filter_w - 8.0).max(160.0);
+                search_box(
+                    ui,
+                    &mut self.search,
+                    "Cari keterangan, kategori, rekening...",
+                    &tc,
+                    search_w,
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut categories: Vec<String> = p.transactions.iter().map(|t| t.category.clone()).collect();
                     categories.sort();
                     categories.dedup();
-                    egui::ComboBox::from_id_source("filter_category")
-                        .selected_text(self.filter_category.clone().unwrap_or_else(|| "Semua Kategori".into()))
-                        .width(170.0)
-                        .show_ui(ui, |ui| {
-                            if ui.selectable_label(self.filter_category.is_none(), "Semua Kategori").clicked() {
-                                self.filter_category = None;
-                                self.page = 0;
-                            }
-                            for cat in &categories {
-                                if ui.selectable_label(self.filter_category.as_deref() == Some(cat.as_str()), cat).clicked() {
-                                    self.filter_category = Some(cat.clone());
+                    styled_combo_scope(ui, &tc, |ui| {
+                        egui::ComboBox::from_id_source("filter_category")
+                            .selected_text(
+                                RichText::new(
+                                    self.filter_category
+                                        .clone()
+                                        .unwrap_or_else(|| "Semua Kategori".into()),
+                                )
+                                .size(12.0)
+                                .color(tc.text),
+                            )
+                            .width(filter_w)
+                            .height(36.0)
+                            .show_ui(ui, |ui| {
+                                if ui.selectable_label(self.filter_category.is_none(), "Semua Kategori").clicked() {
+                                    self.filter_category = None;
                                     self.page = 0;
                                 }
-                            }
-                        });
+                                for cat in &categories {
+                                    if ui.selectable_label(self.filter_category.as_deref() == Some(cat.as_str()), cat).clicked() {
+                                        self.filter_category = Some(cat.clone());
+                                        self.page = 0;
+                                    }
+                                }
+                            });
+                    });
                 });
             });
         }, &tc);
@@ -221,11 +233,8 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Kelola Tagihan", &tc);
-                ui.add_space(2.0);
-                label(ui, "Pantau tagihan rutin, jatuh tempo, dan status pembayaran.", 11.5, tc.muted);
+                page_heading(ui, "Liabilitas", "Kelola Tagihan", &tc);
             });
-            
         });
 
         ui.add_space(16.0);
@@ -236,11 +245,11 @@ impl App {
         let width = ((ui.available_width() - gap * 2.0) / 3.0).floor().max(200.0);
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "TOTAL KEWAJIBAN",
                     value: &format_rp(pending + paid),
-                    accent: tc.white,
+                    accent: tc.text,
                     icon: Icon::Wallet,
                     icon_fg: tc.primary_light,
                     icon_bg: tc.primary_soft,
@@ -251,7 +260,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "SUDAH TERBAYAR",
                     value: &format_rp(paid),
@@ -266,7 +275,7 @@ impl App {
                 }, &tc);
             });
             ui.add_space(gap);
-            ui.allocate_ui_with_layout(Vec2::new(width, 148.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(width, 144.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 metric_card(ui, Metric {
                     label: "BELUM DIBAYAR",
                     value: &format_rp(pending),
@@ -288,7 +297,7 @@ impl App {
             ui.horizontal(|ui| {
                 section_title(ui, "Daftar Tagihan", "Kelola pembayaran rutin dan cicilan", &tc);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    pill(ui, &format!("{} tagihan", p.bills.len()), tc.muted, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c));
+                    pill(ui, &format!("{} tagihan", p.bills.len()), tc.muted, tc.surface_high);
                 });
             });
             ui.add_space(12.0);
@@ -312,7 +321,7 @@ impl App {
                         ui.vertical(|ui| {
                             ui.set_width((ui.available_width() - 300.0).max(160.0));
                             ui.horizontal(|ui| {
-                                ui.label(egui::RichText::new(&bill.name).size(12.5).color(tc.white).strong());
+                                ui.label(egui::RichText::new(&bill.name).size(12.5).color(tc.text).strong());
                                 let (fg, bg) = match bill.status {
                                     BillStatus::Paid => (tc.income, tc.income_soft),
                                     BillStatus::Pending => (tc.warning, tc.warning_soft),
@@ -369,9 +378,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Analisis & Anggaran", &tc);
-                ui.add_space(2.0);
-                label(ui, "Kendali belanja, rasio tabungan, dan komposisi pengeluaran.", 11.5, tc.muted);
+                page_heading(ui, "Insight", "Analisis & Anggaran", &tc);
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if secondary_button(ui, "Ekspor Laporan", &tc).clicked() {
@@ -488,7 +495,7 @@ impl App {
             let center = Pos2::new(rect.center().x, rect.center().y + 4.0);
             let radius = 58.0;
             let painter = ui.painter();
-            painter.circle_stroke(center, radius, Stroke::new(14.0, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c)));
+            painter.circle_stroke(center, radius, Stroke::new(14.0_f32, tc.surface_high));
 
             let mut cats: Vec<(String, f64)> = Vec::new();
             for t in p.transactions.iter().filter(|t| t.kind == TxKind::Expense) {
@@ -507,7 +514,7 @@ impl App {
                     start += sweep;
                 }
             }
-            painter.text(center + Vec2::new(0.0, -8.0), egui::Align2::CENTER_CENTER, format!("{:.0}%", ratio * 100.0), egui::FontId::proportional(26.0), tc.white);
+            painter.text(center + Vec2::new(0.0, -8.0), egui::Align2::CENTER_CENTER, format!("{:.0}%", ratio * 100.0), egui::FontId::proportional(26.0), tc.text);
             painter.text(center + Vec2::new(0.0, 16.0), egui::Align2::CENTER_CENTER, "Rasio Hemat", egui::FontId::proportional(9.5), tc.muted);
 
             ui.add_space(6.0);
@@ -539,9 +546,7 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Pengaturan", &tc);
-                ui.add_space(2.0);
-                label(ui, &format!("Bagian: {}", self.settings_section.label()), 11.5, tc.muted);
+                page_heading(ui, "Preferensi", "Pengaturan", &tc);
             });
         });
 
@@ -553,8 +558,216 @@ impl App {
             SettingsSection::Income => self.settings_categories(ui, &p, SettingsSection::Income),
             SettingsSection::Expenses => self.settings_categories(ui, &p, SettingsSection::Expenses),
             SettingsSection::Bills => self.settings_categories(ui, &p, SettingsSection::Bills),
-            SettingsSection::Theme => self.settings_theme(ui, &p),
+            SettingsSection::Budget => self.settings_budget(ui, &p),
+            SettingsSection::Privacy => self.settings_privacy(ui),
         }
+    }
+
+    fn settings_budget(&mut self, ui: &mut egui::Ui, p: &Project) {
+        let tc = self.theme_colors;
+        let total_w = ui.available_width();
+        let left_w = ((total_w - 16.0) * 0.62).floor();
+        let right_w = total_w - left_w - 16.0;
+        let mut remove: Option<usize> = None;
+        let mut edits: Vec<(usize, String, String)> = Vec::new();
+        let mut add = false;
+
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            ui.allocate_ui_with_layout(
+                Vec2::new(left_w, 520.0),
+                egui::Layout::top_down(egui::Align::Min),
+                |ui| {
+                    card(ui, |ui| {
+                        section_title(ui, "Anggaran Kategori", "Batas pengeluaran per kategori", &tc);
+                        ui.add_space(12.0);
+                        if p.budgets.is_empty() {
+                            label(ui, "Belum ada anggaran. Tambahkan batas pengeluaran pertama Anda.", 11.0, tc.muted);
+                            ui.add_space(10.0);
+                        }
+                        for (idx, budget) in p.budgets.iter().enumerate() {
+                            let mut category = budget.category.clone();
+                            let mut limit_text = format!("{:.0}", budget.limit);
+                            soft_panel(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.add(
+                                        egui::TextEdit::singleline(&mut category)
+                                            .id_source(format!("budget_cat_{idx}"))
+                                            .desired_width(160.0)
+                                            .margin(Vec2::new(10.0, 7.0)),
+                                    );
+                                    ui.add(
+                                        egui::TextEdit::singleline(&mut limit_text)
+                                            .id_source(format!("budget_limit_{idx}"))
+                                            .desired_width(120.0)
+                                            .margin(Vec2::new(10.0, 7.0)),
+                                    );
+                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                        if icon_button(ui, Icon::Trash, "Hapus anggaran", &tc).clicked() {
+                                            remove = Some(idx);
+                                        }
+                                    });
+                                });
+                            }, &tc);
+                            if category.trim() != budget.category || parse_amount(&limit_text) != budget.limit {
+                                edits.push((idx, category.trim().to_string(), limit_text));
+                            }
+                            ui.add_space(6.0);
+                        }
+                        ui.add_space(10.0);
+                        divider(ui, &tc);
+                        ui.add_space(10.0);
+                        label(ui, "ANGGARAN BARU", 10.0, tc.muted_dim);
+                        ui.add_space(5.0);
+                        ui.horizontal(|ui| {
+                            ui.add(
+                                egui::TextEdit::singleline(&mut self.form.budget_category)
+                                    .hint_text(RichText::new("Kategori").color(tc.muted_dim))
+                                    .desired_width(160.0)
+                                    .margin(Vec2::new(10.0, 7.0)),
+                            );
+                            ui.add(
+                                egui::TextEdit::singleline(&mut self.form.budget_limit)
+                                    .hint_text(RichText::new("Nominal").color(tc.muted_dim))
+                                    .desired_width(120.0)
+                                    .margin(Vec2::new(10.0, 7.0)),
+                            );
+                            if primary_button(ui, "Tambah", &tc).clicked() {
+                                add = true;
+                            }
+                        });
+                    }, &tc);
+                },
+            );
+            ui.add_space(16.0);
+            ui.allocate_ui_with_layout(
+                Vec2::new(right_w, 520.0),
+                egui::Layout::top_down(egui::Align::Min),
+                |ui| {
+                    card(ui, |ui| {
+                        section_title(ui, "Cara Kerja", "", &tc);
+                        ui.add_space(12.0);
+                        label(ui, "Anggaran dipakai untuk mengukur realisasi pengeluaran per kategori di halaman Analisis & Anggaran.", 11.0, tc.muted);
+                        ui.add_space(10.0);
+                        divider(ui, &tc);
+                        ui.add_space(10.0);
+                        let total: f64 = p.budgets.iter().map(|b| b.limit).sum();
+                        ui.horizontal(|ui| {
+                            label(ui, "Total anggaran", 10.5, tc.muted);
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                label(ui, &format_rp(total), 12.0, tc.text);
+                            });
+                        });
+                    }, &tc);
+                },
+            );
+        });
+
+        let had_edits = !edits.is_empty();
+        if let Some(idx) = remove {
+            if let Some(proj) = self.current_project_mut() {
+                if idx < proj.budgets.len() {
+                    proj.budgets.remove(idx);
+                }
+                proj.updated_at = today_iso();
+            }
+        }
+        for (idx, category, limit_text) in edits {
+            let limit = parse_amount(&limit_text);
+            if let Some(proj) = self.current_project_mut() {
+                if let Some(budget) = proj.budgets.get_mut(idx) {
+                    budget.category = category;
+                    budget.limit = limit;
+                }
+                proj.updated_at = today_iso();
+            }
+        }
+        if add {
+            let category = self.form.budget_category.trim().to_string();
+            let limit = parse_amount(&self.form.budget_limit);
+            if category.is_empty() || limit <= 0.0 {
+                self.toast("Kategori dan nominal anggaran wajib diisi.");
+                add = false;
+            } else if let Some(proj) = self.current_project_mut() {
+                if let Some(existing) = proj.budgets.iter_mut().find(|b| b.category == category) {
+                    existing.limit = limit;
+                } else {
+                    proj.budgets.push(Budget { category, limit });
+                }
+                proj.updated_at = today_iso();
+                self.form.budget_category.clear();
+                self.form.budget_limit.clear();
+            }
+        }
+        if remove.is_some() || had_edits || add {
+            self.save_current();
+        }
+    }
+
+    fn settings_privacy(&mut self, ui: &mut egui::Ui) {
+        let tc = self.theme_colors;
+        let check_updates = self.settings.check_updates;
+
+        ui.columns(2, |cols| {
+            cols[0].vertical(|ui| {
+                card(ui, |ui| {
+                    section_title(ui, "Privasi Data", "Data Anda tetap di komputer ini", &tc);
+                    ui.add_space(16.0);
+                    for line in [
+                        "FinFlow tidak mengirim data ke server mana pun.",
+                        "Semua transaksi tersimpan di file .ff di komputer Anda.",
+                        "Tidak ada akun, telemetri, atau iklan.",
+                        "Koneksi opsional hanya untuk pemeriksaan pembaruan.",
+                    ] {
+                        ui.horizontal(|ui| {
+                            let (rect, _) = ui.allocate_exact_size(Vec2::splat(12.0), egui::Sense::hover());
+                            paint_icon(ui.painter(), rect, tc.income, Icon::Check, 1.2);
+                            ui.add_space(4.0);
+                            label(ui, line, 11.0, tc.text);
+                        });
+                        ui.add_space(7.0);
+                    }
+                    ui.add_space(8.0);
+                    divider(ui, &tc);
+                    ui.add_space(12.0);
+                    label(ui, "Pembaruan Otomatis", 12.5, tc.text);
+                    ui.add_space(6.0);
+                    label(ui, "Periksa rilis baru dari GitHub saat aplikasi dibuka.", 10.5, tc.muted);
+                    ui.add_space(10.0);
+                    let mut enabled = check_updates;
+                    if ui
+                        .add(egui::Checkbox::new(&mut enabled, "Periksa pembaruan saat startup"))
+                        .on_hover_text("Jika dimatikan, FinFlow tidak menghubungi jaringan sama sekali.")
+                        .changed()
+                    {
+                        self.set_check_updates(enabled);
+                        self.toast(if enabled {
+                            "Pemeriksaan pembaruan diaktifkan."
+                        } else {
+                            "Pemeriksaan pembaruan dimatikan — FinFlow sepenuhnya offline."
+                        });
+                    }
+                }, &tc);
+            });
+
+            cols[1].vertical(|ui| {
+                card(ui, |ui| {
+                    section_title(ui, "Backup & Pulihkan", "Jaga salinan laporan Anda", &tc);
+                    ui.add_space(16.0);
+                    label(ui, "Setiap penyimpanan otomatis membuat salinan.", 10.5, tc.muted);
+                    ui.add_space(6.0);
+                    label(ui, "Maksimal 20 salinan terakhir disimpan per proyek.", 10.5, tc.muted);
+                    ui.add_space(6.0);
+                    label(ui, "Backup disimpan di folder lokal FinFlow, terpisah dari data utama.", 10.5, tc.muted);
+                    ui.add_space(18.0);
+                    if secondary_button(ui, "Pulihkan dari Backup...", &tc).clicked() {
+                        self.restore_backup_dialog();
+                    }
+                    ui.add_space(8.0);
+                    label(ui, "Pulihkan mengganti proyek aktif — simpan salinan dulu jika perlu.", 9.5, tc.muted_dim);
+                }, &tc);
+            });
+        });
     }
 
     fn settings_default(&mut self, ui: &mut egui::Ui, p: &Project) {
@@ -672,153 +885,6 @@ impl App {
         });
     }
 
-    fn settings_theme(&mut self, ui: &mut egui::Ui, _p: &Project) {
-        let tc = self.theme_colors;
-        let total_w = ui.available_width().max(600.0);
-        card(ui, |ui| {
-            ui.set_min_width(total_w);
-            section_title(ui, "Pilih Tema", "Ganti warna tampilan aplikasi", &tc);
-            ui.add_space(16.0);
-            
-            let themes = [
-                Theme::Default,
-                Theme::Banking,
-                Theme::DarkFinance,
-                Theme::Minimal,
-                Theme::Emerald,
-                Theme::Amber,
-                Theme::Violet,
-            ];
-            
-            // Grid 2 kolom untuk tema
-            let cols = 2;
-            let gap = 12.0;
-            let card_w = (total_w - 40.0 - gap) / cols as f32;
-            
-            for (idx, theme) in themes.iter().enumerate() {
-                let col = idx % cols;
-
-                if col == 0 {
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = gap;
-                        self.render_theme_card(ui, *theme, card_w);
-                        if idx + 1 < themes.len() {
-                            self.render_theme_card(ui, themes[idx + 1], card_w);
-                        } else {
-                            // Empty spacer for odd count
-                            ui.allocate_exact_size(Vec2::new(card_w, 1.0), egui::Sense::hover());
-                        }
-                    });
-                    ui.add_space(12.0);
-                }
-            }
-            
-            ui.add_space(8.0);
-            divider(ui, &tc);
-            ui.add_space(12.0);
-            
-            // Preview section
-            if let Some(proj) = self.current_project() {
-                let tc = ThemeColors::from_theme(proj.theme);
-                ui.horizontal(|ui| {
-                    label(ui, "Pratinjau", 14.0, tc.text);
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        label(ui, ThemeColors::label(proj.theme), 12.0, tc.muted);
-                    });
-                });
-                ui.add_space(12.0);
-                
-                // Preview card
-                let preview_rect = ui.allocate_exact_size(Vec2::new(total_w - 40.0, 140.0), egui::Sense::hover()).0;
-                ui.painter().rect_filled(preview_rect, Rounding::same(12.0), tc.surface);
-                ui.painter().rect_stroke(preview_rect, Rounding::same(12.0), Stroke::new(1.0, tc.border));
-                
-                // Preview content
-                ui.put(preview_rect.shrink(20.0).translate(Vec2::new(0.0, -10.0)), 
-                    egui::Label::new(RichText::new("FinFlow").size(24.0).color(tc.text).strong()));
-                ui.put(preview_rect.shrink(20.0).translate(Vec2::new(0.0, 22.0)), 
-                    egui::Label::new(RichText::new("Keuangan Pribadi").size(13.0).color(tc.muted)));
-                
-                // Color swatches
-                let swatch_y = preview_rect.top() + 90.0;
-                let swatches = [
-                    ("Background", tc.bg),
-                    ("Surface", tc.surface),
-                    ("Primary", tc.primary),
-                    ("Income", tc.income),
-                    ("Expense", tc.expense),
-                    ("Warning", tc.warning),
-                    ("Text", tc.text),
-                    ("Muted", tc.muted),
-                    ("Border", tc.border),
-                ];
-                let swatch_w = (total_w - 40.0 - 16.0) / 9.0;
-                for (i, (name, color)) in swatches.iter().enumerate() {
-                    let x = preview_rect.left() + 20.0 + i as f32 * (swatch_w + 2.0);
-                    let swatch_rect = Rect::from_min_size(Pos2::new(x, swatch_y), Vec2::new(swatch_w, 28.0));
-                    ui.painter().rect_filled(swatch_rect, Rounding::same(8.0), *color);
-                    ui.painter().text(
-                        swatch_rect.center(),
-                        egui::Align2::CENTER_CENTER,
-                        name,
-                        FontId::proportional(8.0),
-                        if *color == tc.bg || *color == tc.surface { tc.text } else { tc.white },
-                    );
-                }
-                
-                ui.add_space(160.0);
-                label(ui, "Perubahan tema berlaku instan di seluruh aplikasi.", 10.0, tc.muted);
-            }
-        }, &tc);
-    }
-    
-    fn render_theme_card(&mut self, ui: &mut egui::Ui, theme: Theme, card_w: f32) {
-        let Some(proj) = self.current_project().cloned() else { return };
-        let is_active = proj.theme == theme;
-        let tc = ThemeColors::from_theme(theme);
-        let response = ui.allocate_response(
-            Vec2::new(card_w, 64.0),
-            egui::Sense::click(),
-        );
-        let rect = response.rect;
-        let bg = if is_active { tc.primary_soft } else { tc.surface };
-        let stroke_color = if is_active { tc.primary } else { tc.border };
-        let stroke_width = if is_active { 2.5_f32 } else { 1.0_f32 };
-        
-        ui.painter().rect_stroke(rect, Rounding::same(12.0), Stroke::new(stroke_width, stroke_color));
-        ui.painter().rect_filled(rect.shrink(2.0), Rounding::same(10.0), bg);
-        
-        // Draw label text centered
-        let label_text = ThemeColors::label(theme);
-        let galley = ui.painter().layout_no_wrap(label_text.to_string(), FontId::proportional(14.0), tc.text);
-        ui.painter().galley(
-            rect.center() - galley.size() / 2.0,
-            galley,
-            tc.text,
-        );
-        
-        // Active indicator
-        if is_active {
-            let dot_rect = Rect::from_min_size(
-                Pos2::new(rect.right() - 28.0, rect.top() + 8.0),
-                Vec2::splat(18.0)
-            );
-            ui.painter().circle_filled(dot_rect.center(), 9.0, tc.primary);
-            paint_icon(ui.painter(), dot_rect.shrink(4.0), tc.white, Icon::Check, 1.4);
-        }
-        
-        if response.clicked() {
-            if let Some(proj_mut) = self.current_project_mut() {
-                proj_mut.theme = theme;
-                proj_mut.updated_at = crate::model::today_iso();
-                self.save_current();
-                self.refresh_theme();
-                crate::theme::install(ui.ctx(), &self.theme_colors);
-                self.toast("Tema diperbarui");
-            }
-        }
-    }
-
     fn settings_payments(&mut self, ui: &mut egui::Ui, p: &Project) {
         let tc = self.theme_colors;
         let total_w = ui.available_width();
@@ -894,6 +960,9 @@ impl App {
                 }
                 self.form.bank_name.clear();
             }
+        }
+        if to_remove.is_some() || add {
+            self.save_current();
         }
     }
 
@@ -996,6 +1065,9 @@ impl App {
                 self.form.settings_item.clear();
             }
         }
+        if remove.is_some() || add {
+            self.save_current();
+        }
     }
 
     fn category_list_mut(&mut self, section: SettingsSection) -> Option<&mut Vec<String>> {
@@ -1029,7 +1101,7 @@ impl App {
                         paint_icon(ui.painter(), rect.shrink(15.0), tc.primary_light, Icon::Doc, 1.6);
                     }
                     ui.add_space(12.0);
-                    ui.label(egui::RichText::new("Belum Ada Proyek").size(20.0).color(tc.white).strong());
+                    ui.label(egui::RichText::new("Belum Ada Proyek").size(20.0).color(tc.text).strong());
                     ui.add_space(4.0);
                     ui.label(egui::RichText::new("Setiap laporan keuangan disimpan sebagai file .ff terpisah, sehingga data antar proyek tidak pernah tercampur.").size(11.0).color(tc.muted));
                     ui.add_space(16.0);
@@ -1073,5 +1145,5 @@ fn draw_arc(painter: &egui::Painter, center: Pos2, radius: f32, start: f32, end:
         let a = start + (end - start) * i as f32 / steps as f32;
         points.push(Pos2::new(center.x + a.cos() * radius, center.y + a.sin() * radius));
     }
-    painter.add(egui::Shape::line(points, Stroke::new(14.0, color)));
+    painter.add(egui::Shape::line(points, Stroke::new(14.0_f32, color)));
 }

@@ -1,9 +1,36 @@
 # FinFlow — Keuangan Pribadi / Personal Finance
 
-🇮🇩 [Bahasa Indonesia](#bahasa-indonesia) · 🇬🇧 [English](#english)
+[![Unduh rilis terbaru / Latest release](https://img.shields.io/github/v/release/l3ockydev/finance-flow?label=Download&color=0E6B75&logo=github)](https://github.com/l3ockydev/finance-flow/releases/latest)
+[![Windows 10/11](https://img.shields.io/badge/Windows-10%2F11-0E6B75?logo=windows)](https://www.microsoft.com/windows)
+[![Personal Use License](https://img.shields.io/badge/license-Personal%20Use-8A5E12)](LICENSE)
+[![100% offline](https://img.shields.io/badge/offline-100%25-0B7353)](PRIVACY.md)
 
 Aplikasi desktop manajemen keuangan pribadi untuk Windows 10/11 (64-bit).
 A personal finance desktop app for Windows 10/11 (64-bit).
+
+🇮🇩 [Bahasa Indonesia](#bahasa-indonesia) · 🇬🇧 [English](#english)
+
+---
+
+## ⬇️ Unduh & Instal / Download & Install
+
+**[➜ Unduh FinFlow untuk Windows — ZIP ±4 MB](https://github.com/l3ockydev/finance-flow/releases/latest/download/finance_flow-windows-x86_64.zip)**  
+**[➜ Download FinFlow for Windows — ZIP ~4 MB](https://github.com/l3ockydev/finance-flow/releases/latest/download/finance_flow-windows-x86_64.zip)**
+
+Ekstrak ZIP, lalu double-click `finance_flow.exe`. Tanpa akun, tanpa internet, tanpa Rust.  
+Extract the ZIP, then double-click `finance_flow.exe`. No account, no internet, no Rust.
+
+**Instal otomatis + shortcut Start Menu / Automatic install + Start Menu shortcut** (opsional):
+
+```powershell
+irm https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 | iex
+```
+
+Skrip mengunduh rilis terbaru, mengekstrak ke `%LOCALAPPDATA%\FinFlow`, dan membuat shortcut Start Menu. Data `projects\` yang sudah ada **tidak pernah dihapus**.  
+The script downloads the latest release, extracts to `%LOCALAPPDATA%\FinFlow`, and creates a Start Menu shortcut. Existing `projects\` data is **never deleted**.
+
+> **SmartScreen:** executable belum ditandatangani. Jika muncul *"Windows protected your PC"*, pilih **More info → Run anyway**.  
+> **SmartScreen:** the executable is unsigned. If *"Windows protected your PC"* appears, choose **More info → Run anyway**.
 
 ---
 
@@ -17,13 +44,13 @@ mandiri — mudah dipindah, dibackup, atau dibuka lagi di komputer lain.
 
 ### Install (paling cepat)
 
-1. Buka halaman **Releases** di repository GitHub ini.
-2. Unduh **`finance_flow-windows-x86_64.zip`** dari rilis terbaru.
-3. Ekstrak ke folder mana pun, misalnya `Dokumen\FinFlow`.
-4. Double-click **`finance_flow.exe`**.
+1. Klik **[Unduh FinFlow untuk Windows](https://github.com/l3ockydev/finance-flow/releases/latest/download/finance_flow-windows-x86_64.zip)** — tautan ini selalu mengarah ke rilis terbaru.
+2. Ekstrak ke folder mana pun, misalnya `Dokumen\FinFlow`.
+3. Double-click **`finance_flow.exe`**.
 
 Selesai. Tidak perlu menginstal Rust, tidak perlu internet, tidak perlu setup lain.
-ZIP berisi executable (± 4 MB), README, LICENSE, dan file pendukung update.
+ZIP berisi executable (± 4 MB), README, LICENSE, `PRIVACY.md`, dan file pendukung update.
+Versi lama bisa dilihat di halaman [Releases](https://github.com/l3ockydev/finance-flow/releases).
 
 > **SmartScreen / antivirus:** karena executable belum ditandatangani, Windows
 > mungkin menampilkan peringatan *"Windows protected your PC"*. Klik
@@ -31,17 +58,23 @@ ZIP berisi executable (± 4 MB), README, LICENSE, dan file pendukung update.
 
 ### Instal otomatis ke Start Menu (opsional)
 
-Dari folder repository yang sudah di-clone, jalankan:
+Jalankan satu baris ini di PowerShell — **tidak perlu clone repository**:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -Repo l3ockydev/finance-flow
+irm https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 | iex
 ```
 
-Ganti `l3ockydev/finance-flow` dengan nama repository GitHub Anda, misalnya `budi/finance-flow`.
-Jika dijalankan dari clone Git yang sudah punya remote `origin`, parameter `-Repo`
-tidak perlu dicantumkan. Skrip akan mengunduh ZIP rilis terbaru, mengekstraknya
-ke `%LOCALAPPDATA%\FinFlow`, membuat shortcut **FinFlow** di Start Menu, dan
-**tidak** menghapus folder `projects\` yang sudah ada.
+Alternatif dua langkah (disarankan jika ingin membaca skrip dulu):
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 -OutFile install.ps1
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+Jika menjalankan dari clone Git, skrip membaca nama repo dari remote `origin`;
+jika tidak ada, otomatis memakai `l3ockydev/finance-flow`. Skrip akan mengunduh
+ZIP rilis terbaru, mengekstraknya ke `%LOCALAPPDATA%\FinFlow`, membuat shortcut
+**FinFlow** di Start Menu, dan **tidak** menghapus folder `projects\` yang sudah ada.
 
 Uninstall: hapus shortcut *FinFlow* di Start Menu, lalu hapus folder
 `%LOCALAPPDATA%\FinFlow`.
@@ -73,7 +106,9 @@ projects\
 
 - Setiap proyek = satu file `.ff` berisi transaksi, tagihan, anggaran, dan bukti gambar (base64).
 - Auto-save dilakukan dengan penulisan atomik (`*.ff.tmp` → `*.ff`).
-- **Backup cukup dengan menyalin folder `projects\`.**
+- **Backup otomatis:** setiap penyimpanan membuat salinan di `%LOCALAPPDATA%\FinFlow\backups\` (maks. 20 per proyek). Pulihkan via **Pengaturan → Privasi & Update → Pulihkan dari Backup...**.
+- **Hapus transaksi bisa diurungkan** lewat tombol *Urungkan* di notifikasi selama 6 detik.
+- Backup manual tetap bisa dengan menyalin folder `projects\`.
 - Untuk pindah komputer, salin file `.ff` ke folder `projects\` di instalasi baru.
 - Proyek **kosong** dibuat otomatis jika folder `projects\` kosong — tidak ada transaksi atau tagihan contoh.
 
@@ -83,10 +118,9 @@ projects\
 - Buku transaksi: tambah/ubah/hapus, pencarian, filter, paginasi.
 - Bukti gambar PNG/JPEG/WebP ≤ 5 MB, tersimpan di dalam file proyek.
 - Tagihan dengan status dan aksi “Tandai Lunas”.
-- Analisis anggaran per kategori, rasio tabungan, komposisi pengeluaran.
+- Analisis anggaran per kategori, rasio tabungan, komposisi pengeluaran. Anggaran diatur di **Pengaturan → Anggaran**; proyek baru mulai tanpa anggaran.
 - Ekspor CSV, Excel (`.xls`), PDF; cetak via dialog Windows.
 - Proyek terpisah: buat baru, buka `.ff`, simpan salinan, hapus.
-- 7 tema warna (Default, Banking, DarkFinance, Minimal, Emerald, Amber, Violet).
 
 ### Shortcut keyboard
 
@@ -118,6 +152,7 @@ lalu executable diganti **setelah aplikasi ditutup** — pekerjaan Anda yang sed
 berjalan tidak terganggu. Saat membuka versi baru, muncul notifikasi
 *"FinFlow diperbarui ke v…"*.
 
+- Pemeriksaan update **dapat dimatikan** di **Pengaturan → Privasi & Update**. Jika dimatikan, FinFlow tidak menghubungi jaringan sama sekali. Lihat [`PRIVACY.md`](PRIVACY.md).
 - Internet hanya diperlukan untuk pemeriksaan update; jika offline, pemeriksaan
   gagal secara senyap dan aplikasi tetap berjalan normal.
 - Nama repository dibaca dari `update.json`. File bawaan memakai placeholder
@@ -155,30 +190,36 @@ or reopen on another computer.
 
 ### Install (quickest)
 
-1. Open the **Releases** page of this GitHub repository.
-2. Download **`finance_flow-windows-x86_64.zip`** from the latest release.
-3. Extract it anywhere, for example `Documents\FinFlow`.
-4. Double-click **`finance_flow.exe`**.
+1. Click **[Download FinFlow for Windows](https://github.com/l3ockydev/finance-flow/releases/latest/download/finance_flow-windows-x86_64.zip)** — this link always points to the latest release.
+2. Extract it anywhere, for example `Documents\FinFlow`.
+3. Double-click **`finance_flow.exe`**.
 
 That's it. Rust, internet access, and extra setup are not required. The ZIP
-contains the executable (~4 MB), README, LICENSE, and update support files.
+contains the executable (~4 MB), README, LICENSE, `PRIVACY.md`, and update
+support files. Older versions are listed on the [Releases](https://github.com/l3ockydev/finance-flow/releases) page.
 
 > **SmartScreen / antivirus:** the executable is unsigned, so Windows may show
 > *"Windows protected your PC"*. Click **More info → Run anyway** to launch it.
 
 ### Optional Start Menu installer
 
-From a cloned copy of this repository, run:
+Run this one line in PowerShell — **no repository clone needed**:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -Repo l3ockydev/finance-flow
+irm https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 | iex
 ```
 
-Replace `l3ockydev/finance-flow` with your GitHub repository name, e.g. `budi/finance-flow`.
-When running inside a Git clone that already has an `origin` remote, you may omit
-`-Repo`. The script downloads the latest release ZIP, extracts it to
-`%LOCALAPPDATA%\FinFlow`, creates a **FinFlow** Start Menu shortcut, and never
-deletes an existing `projects\` folder.
+Two-step alternative (recommended if you want to read the script first):
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/l3ockydev/finance-flow/main/install.ps1 -OutFile install.ps1
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+When run inside a Git clone, the script reads the repo name from the `origin`
+remote; otherwise it defaults to `l3ockydev/finance-flow`. It downloads the
+latest release ZIP, extracts it to `%LOCALAPPDATA%\FinFlow`, creates a **FinFlow**
+Start Menu shortcut, and never deletes an existing `projects\` folder.
 
 To uninstall, remove the *FinFlow* shortcut and delete `%LOCALAPPDATA%\FinFlow`.
 
@@ -209,7 +250,9 @@ projects\
 
 - Each project is one `.ff` file containing transactions, bills, budgets, and image evidence (base64).
 - Auto-save uses atomic writes (`*.ff.tmp` → `*.ff`).
-- **Back up simply by copying the `projects\` folder.**
+- **Automatic backup:** every save creates a copy in `%LOCALAPPDATA%\FinFlow\backups\` (max. 20 per project). Restore via **Settings → Privacy & Update → Restore from Backup...**.
+- **Deleted transactions can be undone** using the *Undo* button in the toast for 6 seconds.
+- Manual backup is still possible by copying the `projects\` folder.
 - To move computers, copy the `.ff` files into `projects\` of the new installation.
 - A **blank** project is created automatically when `projects\` is empty — no sample transactions or bills.
 
@@ -219,10 +262,9 @@ projects\
 - Transaction ledger: add/edit/delete, search, filters, and pagination.
 - Image evidence (PNG/JPEG/WebP, ≤ 5 MB) stored inside the project file.
 - Bills with statuses and a “Mark as Paid” action.
-- Budget analysis per category, savings ratio, and expense composition.
+- Budget analysis per category, savings ratio, and expense composition. Budgets are managed in **Settings → Budget**; new projects start with no budgets.
 - Export to CSV, Excel (`.xls`), and PDF; print via the Windows dialog.
 - Separate projects: create, open `.ff`, save a copy, delete.
-- 7 live themes (Default, Banking, DarkFinance, Minimal, Emerald, Amber, Violet).
 
 ### Keyboard shortcuts
 
@@ -253,6 +295,7 @@ If a newer version exists, the ZIP is downloaded and the executable is replaced
 **after the app closes** — your current session is never interrupted. The next
 launch shows a *"FinFlow updated to v…"* notification.
 
+- The update check **can be disabled** in **Settings → Privacy & Update**. When disabled, FinFlow never contacts the network. See [`PRIVACY.md`](PRIVACY.md).
 - Internet is only needed for the update check; when offline the check fails
   silently and the app works normally.
 - The repository name comes from `update.json`. The bundled file uses the

@@ -8,14 +8,20 @@ use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
 
 pub fn dim(ctx: &egui::Context) {
     let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Middle, egui::Id::new("finflow_dim")));
-    painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(30));
+    painter.rect_filled(ctx.screen_rect(), Rounding::ZERO, Color32::from_black_alpha(45));
 }
 
 fn modal_frame(tc: &ThemeColors) -> egui::Frame {
     egui::Frame::none()
         .fill(tc.surface)
         .rounding(Rounding::same(16.0))
-        .stroke(Stroke::new(1.0, Color32::from_rgba_premultiplied(0x24, 0x24, 0x24, 0x24)))
+        .stroke(Stroke::new(1.0_f32, tc.border))
+        .shadow(egui::epaint::Shadow {
+            offset: egui::vec2(0.0, 18.0),
+            blur: 48.0,
+            spread: -10.0,
+            color: Color32::from_black_alpha(90),
+        })
         .inner_margin(egui::Margin::same(24.0))
 }
 
@@ -23,10 +29,11 @@ fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading
     let mut close = false;
     ui.horizontal(|ui| {
         icon_badge(ui, icon, fg, bg, 38.0);
-        ui.add_space(2.0);
+        ui.add_space(6.0);
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new(heading).size(17.0).color(tc.white).strong());
-            ui.label(egui::RichText::new(subtitle).size(10.5).color(tc.muted));
+            ui.label(egui::RichText::new(heading).size(17.0).color(tc.text).strong());
+            ui.add_space(2.0);
+            ui.label(egui::RichText::new(subtitle).size(11.0).color(tc.muted));
         });
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             if icon_button(ui, Icon::Close, "Tutup", tc).clicked() {
@@ -35,71 +42,82 @@ fn modal_header(ui: &mut egui::Ui, icon: Icon, fg: Color32, bg: Color32, heading
         });
     });
     ui.add_space(14.0);
+    divider(ui, tc);
+    ui.add_space(14.0);
     close
 }
 
 fn amount_field(ui: &mut egui::Ui, amount: &mut String, tc: &ThemeColors) {
-    ui.label(egui::RichText::new("NOMINAL").size(10.0).color(tc.muted).strong());
-    ui.add_space(3.0);
-    ui.horizontal(|ui| {
-        egui::Frame::none()
-            .fill(tc.surface_high)
-            .rounding(Rounding::same(8.0))
-            .inner_margin(egui::Margin::symmetric(12.0, 9.0))
-            .show(ui, |ui| {
+    ui.label(egui::RichText::new("NOMINAL").size(10.5).color(tc.muted_dim).strong());
+    ui.add_space(5.0);
+    egui::Frame::none()
+        .fill(tc.surface_high)
+        .rounding(Rounding::same(10.0))
+        .stroke(Stroke::new(1.0_f32, tc.border))
+        .inner_margin(egui::Margin::symmetric(12.0, 8.0))
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 ui.label(egui::RichText::new("Rp").size(13.0).color(tc.primary_light).strong());
+                ui.add(
+                    egui::TextEdit::singleline(amount)
+                        .hint_text(RichText::new("0").color(tc.muted_dim))
+                        .desired_width(f32::INFINITY)
+                        .frame(false)
+                        .font(egui::TextStyle::Heading)
+                        .margin(Vec2::ZERO),
+                );
             });
-        ui.add(
-            egui::TextEdit::singleline(amount)
-                .hint_text(RichText::new("0").color(tc.muted_dim))
-                .desired_width(f32::INFINITY)
-                .font(egui::TextStyle::Heading)
-                .margin(Vec2::new(12.0, 8.0)),
-        );
-    });
-    ui.add_space(6.0);
+        });
+    ui.add_space(8.0);
 }
 
 fn category_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
-    ui.label(egui::RichText::new("KATEGORI").size(10.0).color(tc.muted).strong());
-    ui.add_space(3.0);
-    egui::ComboBox::from_id_source(format!("cat_{}", value))
-        .selected_text(value.clone())
-        .width(ui.available_width())
-        .show_ui(ui, |ui| {
-            for option in options {
-                ui.selectable_value(value, option.to_string(), *option);
-            }
-        });
+    ui.label(egui::RichText::new("KATEGORI").size(10.5).color(tc.muted_dim).strong());
+    ui.add_space(5.0);
+    styled_combo_scope(ui, tc, |ui| {
+        egui::ComboBox::from_id_source(format!("cat_{}", value))
+            .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
+            .width(ui.available_width())
+            .height(36.0)
+            .show_ui(ui, |ui| {
+                for option in options {
+                    ui.selectable_value(value, option.to_string(), *option);
+                }
+            });
+    });
 }
 
 fn account_picker(ui: &mut egui::Ui, value: &mut String, options: &[&str], tc: &ThemeColors) {
-    ui.label(egui::RichText::new("AKUN BANK").size(10.0).color(tc.muted).strong());
-    ui.add_space(3.0);
-    egui::ComboBox::from_id_source(format!("acc_{}", value))
-        .selected_text(value.clone())
-        .width(ui.available_width())
-        .show_ui(ui, |ui| {
-            for option in options {
-                ui.selectable_value(value, option.to_string(), *option);
-            }
-        });
+    ui.label(egui::RichText::new("AKUN BANK").size(10.5).color(tc.muted_dim).strong());
+    ui.add_space(5.0);
+    styled_combo_scope(ui, tc, |ui| {
+        egui::ComboBox::from_id_source(format!("acc_{}", value))
+            .selected_text(RichText::new(value.clone()).size(12.0).color(tc.text))
+            .width(ui.available_width())
+            .height(36.0)
+            .show_ui(ui, |ui| {
+                for option in options {
+                    ui.selectable_value(value, option.to_string(), *option);
+                }
+            });
+    });
 }
 
 fn date_field(ui: &mut egui::Ui, value: &mut String, tc: &ThemeColors) {
-    ui.label(egui::RichText::new("TANGGAL").size(10.0).color(tc.muted).strong());
-    ui.add_space(3.0);
+    ui.label(egui::RichText::new("TANGGAL").size(10.5).color(tc.muted_dim).strong());
+    ui.add_space(5.0);
     ui.add(
         egui::TextEdit::singleline(value)
             .hint_text(RichText::new("2026-11-22").color(tc.muted_dim))
             .desired_width(f32::INFINITY)
-            .margin(Vec2::new(10.0, 8.0)),
+            .margin(Vec2::new(12.0, 9.0)),
     );
 }
 
 fn evidence_row(ui: &mut egui::Ui, app: &mut App) {
     let tc = app.theme_colors;
-    ui.label(egui::RichText::new("BUKTI TRANSAKSI").size(10.0).color(tc.muted).strong());
+    ui.label(egui::RichText::new("BUKTI TRANSAKSI").size(10.5).color(tc.muted_dim).strong());
     ui.add_space(3.0);
     ui.horizontal(|ui| {
         if secondary_button(ui, "Lampirkan Gambar", &tc).clicked() {
@@ -130,14 +148,14 @@ fn evidence_row(ui: &mut egui::Ui, app: &mut App) {
             }
             label(ui, app.form.image_name.as_deref().unwrap_or("Gambar terlampir"), 10.0, tc.income);
         } else {
-            label(ui, "Opsional â€” struk, invoice, atau screenshot", 10.0, tc.muted_dim);
+            label(ui, "Opsional — struk, invoice, atau screenshot", 10.0, tc.muted_dim);
         }
     });
 }
 
 impl App {
     /// Category options for 0 = income, 1 = expense, 2 = bill.
-    fn category_options(&self, kind: u8) -> Vec<String> {
+    pub(crate) fn category_options(&self, kind: u8) -> Vec<String> {
         let list = self.current_project().map(|p| match kind {
             0 => p.income_categories.clone(),
             1 => p.expense_categories.clone(),
@@ -153,7 +171,7 @@ impl App {
         }
     }
 
-    fn account_options(&self) -> Vec<String> {
+    pub(crate) fn account_options(&self) -> Vec<String> {
         match self.current_project() {
             Some(p) if !p.bank_accounts.is_empty() => p.bank_accounts.clone(),
             _ => default_bank_accounts(),
@@ -226,7 +244,7 @@ impl App {
                         &tc,
                     );
                     cols[1].add_space(8.0);
-                    cols[1].label(egui::RichText::new("WAKTU").size(10.0).color(tc.muted).strong());
+                    cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
                     cols[1].add_space(3.0);
                     cols[1].add(
                         egui::TextEdit::singleline(&mut self.form.time)
@@ -249,7 +267,7 @@ impl App {
                             egui::Button::new(egui::RichText::new(label_text).size(13.0).color(tc.white).strong())
                                 .fill(accent)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
@@ -379,7 +397,7 @@ impl App {
                     egui::Frame::none()
                         .fill(if selected { tc.primary_soft } else { tc.surface_low })
                         .rounding(Rounding::same(10.0))
-                        .stroke(Stroke::new(1.0, if selected { tc.primary } else { tc.border }))
+                        .stroke(Stroke::new(1.0_f32, if selected { tc.primary } else { tc.border }))
                         .inner_margin(egui::Margin::symmetric(14.0, 10.0))
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
@@ -475,7 +493,7 @@ impl App {
                 } else {
                     (tc.expense, tc.expense_soft, Icon::ArrowUp)
                 };
-                if modal_header(ui, icon, accent, soft, "Detail Transaksi", &format!("{} â€¢ {}", tx.kind.label(), format_date_long(&tx.date)), &tc) {
+                if modal_header(ui, icon, accent, soft, "Detail Transaksi", &format!("{} • {}", tx.kind.label(), format_date_long(&tx.date)), &tc) {
                     close = true;
                 }
                 ui.horizontal(|ui| {
@@ -630,7 +648,7 @@ impl App {
                             egui::Button::new(egui::RichText::new("Ya, Hapus").size(13.0).color(tc.white).strong())
                                 .fill(tc.expense)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
@@ -720,7 +738,7 @@ impl App {
                             egui::Button::new(egui::RichText::new("Hapus Proyek").size(13.0).color(tc.white).strong())
                                 .fill(tc.expense)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {
@@ -749,6 +767,26 @@ impl App {
         let mut save = false;
         let mut close = false;
 
+        // Header (termasuk tombol tutup) harus menjadi elemen pertama di modal,
+        // sebelum bilah tab, agar tombol "X" berada di pojok kanan atas.
+        let (heading, subtitle, accent, accent_soft, icon) = match tab {
+            Tab::Income => (
+                if self.editing_tx.is_some() { "Ubah Pemasukan" } else { "Catat Pemasukan Baru" },
+                "Catat gaji, dividen, pelunasan proyek, atau pendapatan lain.",
+                tc.income, tc.income_soft, Icon::ArrowDown,
+            ),
+            Tab::Expense => (
+                if self.editing_tx.is_some() { "Ubah Pengeluaran" } else { "Catat Pengeluaran Baru" },
+                "Catat belanja, tagihan rutin, transportasi, dan operasional harian.",
+                tc.expense, tc.expense_soft, Icon::ArrowUp,
+            ),
+            Tab::Bill => (
+                "Tambah Tagihan",
+                "Catat kewajiban rutin dan tanggal jatuh temponya.",
+                tc.warning, tc.warning_soft, Icon::Bell,
+            ),
+        };
+
         egui::Window::new("add_transaction_modal")
             .title_bar(false)
             .default_width(580.0)
@@ -758,6 +796,9 @@ impl App {
             .movable(false)
             .frame(modal_frame(&tc))
             .show(ctx, |ui| {
+                if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
+                    close = true;
+                }
                 ui.horizontal(|ui| {
                     let tabs = [
                         (Tab::Income, "Pemasukan", tc.income, tc.income_soft, Icon::ArrowDown),
@@ -766,15 +807,40 @@ impl App {
                     ];
                     for (t, label, fg, bg, icon) in tabs {
                         let selected = tab == t;
-                        let (rect, _) = ui.allocate_exact_size(Vec2::splat(20.0), egui::Sense::hover());
-                        let resp = ui
-                            .add(egui::Button::new({
-                                paint_icon(ui.painter(), rect.shrink(4.0), if selected { tc.white } else { fg }, icon, 1.2);
-                                egui::RichText::new(label).size(11.5).color(if selected { tc.white } else { fg }).strong()
-                            })
-                            .fill(if selected { fg } else { bg })
-                            .rounding(Rounding::same(8.0))
-                            .min_size(Vec2::new(110.0, 34.0)));
+                        let (rect, resp) =
+                            ui.allocate_exact_size(Vec2::new(150.0, 36.0), egui::Sense::click());
+                        let painter = ui.painter();
+                        let fill = if selected {
+                            fg
+                        } else if resp.hovered() {
+                            tc.surface_highest
+                        } else {
+                            bg
+                        };
+                        let stroke = if selected {
+                            Stroke::NONE
+                        } else {
+                            Stroke::new(1.0_f32, tc.border_soft)
+                        };
+                        painter.rect(rect, Rounding::same(10.0), fill, stroke);
+                        let icon_color = if selected { tc.white } else { fg };
+                        paint_icon(
+                            painter,
+                            egui::Rect::from_center_size(
+                                egui::Pos2::new(rect.left() + 20.0, rect.center().y),
+                                Vec2::splat(16.0),
+                            ),
+                            icon_color,
+                            icon,
+                            1.5,
+                        );
+                        painter.text(
+                            egui::Pos2::new(rect.left() + 36.0, rect.center().y),
+                            egui::Align2::LEFT_CENTER,
+                            label,
+                            egui::FontId::proportional(12.0),
+                            if selected { tc.white } else { tc.text },
+                        );
                         if resp.clicked() {
                             tab = t;
                             self.add_tx_tab = match t {
@@ -804,14 +870,6 @@ impl App {
 
                 match tab {
                     Tab::Income => {
-                        let (heading, subtitle, accent, accent_soft, icon) = (
-                            if self.editing_tx.is_some() { "Ubah Pemasukan" } else { "Catat Pemasukan Baru" },
-                            "Catat gaji, dividen, pelunasan proyek, atau pendapatan lain.",
-                            tc.income, tc.income_soft, Icon::ArrowDown,
-                        );
-                        if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
-                            close = true;
-                        }
                         amount_field(ui, &mut self.form.amount, &tc);
                         let cats = self.category_options(0);
                         let cat_opts: Vec<&str> = cats.iter().map(|s| s.as_str()).collect();
@@ -833,13 +891,13 @@ impl App {
                                 &tc
                             );
                             cols[1].add_space(8.0);
-                            cols[1].label(egui::RichText::new("WAKTU").size(10.0).color(tc.muted).strong());
-                            cols[1].add_space(3.0);
+                            cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
+                            cols[1].add_space(5.0);
                             cols[1].add(
                                 egui::TextEdit::singleline(&mut self.form.time)
-                                    .hint_text("08:30")
+                                    .hint_text(RichText::new("08:30").color(tc.muted_dim))
                                     .desired_width(f32::INFINITY)
-                                    .margin(Vec2::new(10.0, 8.0)),
+                                    .margin(Vec2::new(12.0, 9.0)),
                             );
                         });
                         ui.add_space(10.0);
@@ -847,14 +905,6 @@ impl App {
                         evidence_row(ui, self);
                     }
                     Tab::Expense => {
-                        let (heading, subtitle, accent, accent_soft, icon) = (
-                            if self.editing_tx.is_some() { "Ubah Pengeluaran" } else { "Catat Pengeluaran Baru" },
-                            "Catat belanja, tagihan rutin, transportasi, dan operasional harian.",
-                            tc.expense, tc.expense_soft, Icon::ArrowUp,
-                        );
-                        if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
-                            close = true;
-                        }
                         amount_field(ui, &mut self.form.amount, &tc);
                         let cats = self.category_options(1);
                         let cat_opts: Vec<&str> = cats.iter().map(|s| s.as_str()).collect();
@@ -876,13 +926,13 @@ impl App {
                                 &tc
                             );
                             cols[1].add_space(8.0);
-                            cols[1].label(egui::RichText::new("WAKTU").size(10.0).color(tc.muted).strong());
-                            cols[1].add_space(3.0);
+                            cols[1].label(egui::RichText::new("WAKTU").size(10.5).color(tc.muted_dim).strong());
+                            cols[1].add_space(5.0);
                             cols[1].add(
                                 egui::TextEdit::singleline(&mut self.form.time)
-                                    .hint_text("08:30")
+                                    .hint_text(RichText::new("08:30").color(tc.muted_dim))
                                     .desired_width(f32::INFINITY)
-                                    .margin(Vec2::new(10.0, 8.0)),
+                                    .margin(Vec2::new(12.0, 9.0)),
                             );
                         });
                         ui.add_space(10.0);
@@ -890,14 +940,6 @@ impl App {
                         evidence_row(ui, self);
                     }
                     Tab::Bill => {
-                        let (heading, subtitle, accent, accent_soft, icon) = (
-                            "Tambah Tagihan",
-                            "Catat kewajiban rutin dan tanggal jatuh temponya.",
-                            tc.warning, tc.warning_soft, Icon::Bell,
-                        );
-                        if modal_header(ui, icon, accent, accent_soft, heading, subtitle, &tc) {
-                            close = true;
-                        }
                         field(ui, "NAMA TAGIHAN", &mut self.form.name, "Contoh: IndiHome Fiber 100M", &tc);
                         amount_field(ui, &mut self.form.amount, &tc);
                         let cats = self.category_options(2);
@@ -942,7 +984,7 @@ impl App {
                             egui::Button::new(egui::RichText::new(label_text).size(13.0).color(tc.white).strong())
                                 .fill(accent)
                                 .rounding(Rounding::same(8.0))
-                                .min_size(Vec2::new(0.0, 34.0)),
+                                .min_size(Vec2::new(0.0, 36.0)),
                         )
                         .clicked()
                     {

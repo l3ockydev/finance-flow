@@ -11,8 +11,9 @@ mod views;
 mod views_pages;
 
 use base64::Engine;
-use eframe::egui::{self, FontId, Rounding, Sense, Stroke, Vec2};
+use eframe::egui::{self, Color32, FontId, Rounding, Sense, Stroke, Vec2};
 use model::*;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -59,8 +60,9 @@ pub enum SettingsSection {
     Expenses,
     Income,
     Bills,
+    Budget,
     Default,
-    Theme,
+    Privacy,
 }
 
 impl SettingsSection {
@@ -70,10 +72,67 @@ impl SettingsSection {
             SettingsSection::Expenses => "Pengeluaran",
             SettingsSection::Income => "Pemasukan",
             SettingsSection::Bills => "Tagihan",
+            SettingsSection::Budget => "Anggaran",
             SettingsSection::Default => "Default",
-            SettingsSection::Theme => "Tema",
+            SettingsSection::Privacy => "Privasi & Update",
         }
     }
+}
+
+/// Preferensi aplikasi yang tidak ikut masuk ke file `.ff` proyek.
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AppSettings {
+    pub check_updates: bool,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self { check_updates: true }
+    }
+}
+
+impl AppSettings {
+    fn path() -> PathBuf {
+        let base = std::env::var("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from(".").join(".finflow"));
+        base.join("FinFlow").join("settings.json")
+    }
+
+    fn load() -> Self {
+        fs::read_to_string(Self::path())
+            .ok()
+            .and_then(|content| serde_json::from_str::<Self>(&content).ok())
+            .unwrap_or_default()
+    }
+
+    fn save(&self) {
+        let path = Self::path();
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Ok(json) = serde_json::to_string_pretty(self) {
+            let temp = path.with_extension("json.tmp");
+            if fs::write(&temp, json).is_ok() {
+                let _ = fs::rename(&temp, &path);
+            }
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct UndoDelete {
+    pub project_id: String,
+    pub index: usize,
+    pub transaction: Transaction,
+}
+
+#[derive(Clone)]
+pub struct Toast {
+    pub message: String,
+    pub created: Instant,
+    pub undo: Option<UndoDelete>,
 }
 
 #[derive(Clone)]
@@ -93,6 +152,8 @@ pub struct Form {
     pub format: ExportFormat,
     pub bank_name: String,
     pub settings_item: String,
+    pub budget_category: String,
+    pub budget_limit: String,
 }
 
 impl Default for Form {
@@ -113,31 +174,30 @@ impl Default for Form {
             format: ExportFormat::Pdf,
             bank_name: String::new(),
             settings_item: String::new(),
+            budget_category: String::new(),
+            budget_limit: String::new(),
         }
     }
 }
 
 impl Form {
-    fn reset_entry(&mut self, kind: TxKind) {
+    fn reset_entry(&mut self, _kind: TxKind, category: String, account: String) {
         self.amount.clear();
         self.note.clear();
         self.date = today_iso();
         self.time = "09:00".to_string();
-        self.category = match kind {
-            TxKind::Income => "Gaji & Bonus".to_string(),
-            TxKind::Expense => "Kebutuhan Pokok".to_string(),
-        };
-        self.account = "BCA Prioritas".to_string();
+        self.category = category;
+        self.account = account;
         self.image = None;
         self.image_mime = None;
         self.image_name = None;
     }
 
-    fn reset_bill(&mut self) {
+    fn reset_bill(&mut self, category: String) {
         self.name.clear();
         self.amount.clear();
         self.due_date = shift_iso(&today_iso(), 7);
-        self.category = "Internet".to_string();
+        self.category = category;
     }
 }
 
@@ -156,12 +216,12 @@ pub struct App {
     pub detail_tx: Option<String>,
     pub editing_tx: Option<String>,
     pub evidence_tex: Option<(String, egui::TextureHandle)>,
-    pub toast_message: Option<(String, Instant)>,
+    pub toast_message: Option<Toast>,
+    pub settings: AppSettings,
     pub add_tx_tab: u8,
     pub settings_section: SettingsSection,
     pub settings_expanded: bool,
     pub theme_colors: ThemeColors,
-    pub last_theme: Option<Theme>,
     pub logo_tex: Option<egui::TextureHandle>,
 }
 
@@ -171,6 +231,10 @@ impl App {
             .unwrap_or_else(|_| PathBuf::from("."))
             .join("projects");
         let _ = fs::create_dir_all(&dir);
+        let settings = AppSettings::load();
+        if settings.check_updates {
+            spawn_auto_updater();
+        }
         let mut app = Self {
             projects: Vec::new(),
             current: None,
@@ -187,11 +251,11 @@ impl App {
             editing_tx: None,
             evidence_tex: None,
             toast_message: None,
+            settings,
             add_tx_tab: 0,
             settings_section: SettingsSection::Default,
             settings_expanded: false,
             theme_colors: ThemeColors::default(),
-            last_theme: None,
             logo_tex: None,
         };
         app.load_projects();
@@ -206,31 +270,10 @@ impl App {
             app.projects.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
             app.current = Some(app.projects[0].id.clone());
         }
-        app.refresh_theme();
-        app.last_theme = app.current_project().map(|p| p.theme);
         if let Some(version) = update_notice() {
             app.toast(&format!("FinFlow diperbarui ke v{version}."));
         }
         app
-    }
-
-    pub fn refresh_theme(&mut self) {
-        if let Some(proj) = self.current_project() {
-            self.theme_colors = ThemeColors::from_theme(proj.theme);
-        } else {
-            self.theme_colors = ThemeColors::default();
-        }
-    }
-
-    fn check_theme_change(&mut self, ctx: &egui::Context) {
-        let current_theme = self.current_project().map(|p| p.theme);
-        if current_theme != self.last_theme {
-            if let Some(proj) = self.current_project() {
-                self.theme_colors = ThemeColors::from_theme(proj.theme);
-                theme::install(ctx, &self.theme_colors);
-                self.last_theme = current_theme;
-            }
-        }
     }
 
     // -- persistence --------------------------------------------------------
@@ -257,10 +300,61 @@ impl App {
         self.dir.join(format!("{}.ff", slug(&project.id)))
     }
 
+    /// Backup disimpan terpisah dari `projects/` agar data utama tidak pernah
+    /// dihapus atau ditimpa oleh proses pembersihan otomatis.
+    fn backup_root() -> PathBuf {
+        let base = std::env::var("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from(".").join(".finflow"));
+        base.join("FinFlow").join("backups")
+    }
+
+    fn backup_dir(&self, project: &Project) -> PathBuf {
+        Self::backup_root().join(slug(&project.id))
+    }
+
+    fn create_backup(&self, path: &Path, project: &Project) {
+        let Ok(bytes) = fs::read(path) else {
+            return;
+        };
+        let dir = self.backup_dir(project);
+        if fs::create_dir_all(&dir).is_err() {
+            return;
+        }
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        let _ = fs::write(dir.join(format!("{}.ff", stamp)), bytes);
+        self.prune_backups(&dir);
+    }
+
+    fn prune_backups(&self, dir: &Path) {
+        const MAX: usize = 20;
+        let Ok(entries) = fs::read_dir(dir) else {
+            return;
+        };
+        let mut files: Vec<_> = entries
+            .flatten()
+            .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("ff"))
+            .collect();
+        if files.len() <= MAX {
+            return;
+        }
+        files.sort_by_key(|e| e.file_name());
+        let remove_count = files.len() - MAX;
+        for old in files.into_iter().take(remove_count) {
+            let _ = fs::remove_file(old.path());
+        }
+    }
+
     pub fn save_project(&self, project: &Project) {
         let _ = fs::create_dir_all(&self.dir);
         if let Ok(json) = serde_json::to_string_pretty(project) {
             let path = self.project_path(project);
+            if path.exists() {
+                self.create_backup(&path, project);
+            }
             let temp = path.with_extension("ff.tmp");
             if fs::write(&temp, json).is_ok() {
                 let _ = fs::remove_file(&path);
@@ -349,6 +443,21 @@ impl App {
             return;
         };
         self.import_project(&path);
+    }
+
+    /// Pilih salinan otomatis dari folder backup lokal, lalu pulihkan sebagai proyek aktif.
+    pub fn restore_backup_dialog(&mut self) {
+        let root = Self::backup_root();
+        let _ = fs::create_dir_all(&root);
+        let Some(path) = rfd::FileDialog::new()
+            .set_directory(root)
+            .add_filter("FinFlow Backup", &["ff"])
+            .pick_file()
+        else {
+            return;
+        };
+        self.import_project(&path);
+        self.toast("Backup dipulihkan. Periksa kembali isi proyek Anda.");
     }
 
     fn import_project(&mut self, path: &Path) {
@@ -520,9 +629,21 @@ impl App {
     }
 
     pub fn delete_transaction(&mut self, id: &str) {
+        let undo = self.current_project().and_then(|project| {
+            let index = project.transactions.iter().position(|t| t.id == id)?;
+            Some(UndoDelete {
+                project_id: project.id.clone(),
+                index,
+                transaction: project.transactions[index].clone(),
+            })
+        });
         self.commit(|project| project.transactions.retain(|t| t.id != id));
         self.detail_tx = None;
-        self.toast("Transaksi dihapus.");
+        if let Some(undo) = undo {
+            self.toast_with_undo("Transaksi dihapus.", undo);
+        } else {
+            self.toast("Transaksi dihapus.");
+        }
     }
 
     // -- bill actions -------------------------------------------------------
@@ -562,22 +683,48 @@ impl App {
 
     // -- modal & toast ------------------------------------------------------
 
+    /// Isi ulang form transaksi dengan kategori & akun dari pengaturan proyek,
+    /// bukan nilai hardcode. Dipakai setiap kali popup dibuka.
+    fn reset_entry_form(&mut self, kind: TxKind) {
+        let category_kind = if kind == TxKind::Income { 0 } else { 1 };
+        let category = self
+            .category_options(category_kind)
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| "Lainnya".to_string());
+        let account = self
+            .account_options()
+            .into_iter()
+            .next()
+            .unwrap_or_default();
+        self.form.reset_entry(kind, category, account);
+    }
+
+    fn reset_bill_form(&mut self) {
+        let category = self
+            .category_options(2)
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| "Lainnya".to_string());
+        self.form.reset_bill(category);
+    }
+
     pub fn open_modal(&mut self, modal: Modal) {
         match modal {
             Modal::AddTransaction => {
                 self.editing_tx = None;
                 self.add_tx_tab = 0;
-                self.form.reset_entry(TxKind::Income);
+                self.reset_entry_form(TxKind::Income);
             }
             Modal::Income => {
-                self.form.reset_entry(TxKind::Income);
+                self.reset_entry_form(TxKind::Income);
                 self.editing_tx = None;
             }
             Modal::Expense => {
-                self.form.reset_entry(TxKind::Expense);
+                self.reset_entry_form(TxKind::Expense);
                 self.editing_tx = None;
             }
-            Modal::Bill => self.form.reset_bill(),
+            Modal::Bill => self.reset_bill_form(),
             Modal::NewProject => {
                 self.form.name.clear();
                 self.form.owner = self.current_project().map(|p| p.owner.clone()).unwrap_or_default();
@@ -599,7 +746,42 @@ impl App {
     }
 
     pub fn toast(&mut self, message: &str) {
-        self.toast_message = Some((message.to_string(), Instant::now()));
+        self.toast_message = Some(Toast {
+            message: message.to_string(),
+            created: Instant::now(),
+            undo: None,
+        });
+    }
+
+    pub fn toast_with_undo(&mut self, message: &str, undo: UndoDelete) {
+        self.toast_message = Some(Toast {
+            message: message.to_string(),
+            created: Instant::now(),
+            undo: Some(undo),
+        });
+    }
+
+    pub fn set_check_updates(&mut self, enabled: bool) {
+        self.settings.check_updates = enabled;
+        self.settings.save();
+    }
+
+    pub fn undo_delete(&mut self) {
+        let Some(undo) = self
+            .toast_message
+            .as_ref()
+            .and_then(|toast| toast.undo.clone())
+        else {
+            return;
+        };
+        if let Some(project) = self.projects.iter_mut().find(|p| p.id == undo.project_id) {
+            let index = undo.index.min(project.transactions.len());
+            project.transactions.insert(index, undo.transaction.clone());
+            project.touch();
+            let project = project.clone();
+            self.save_project(&project);
+        }
+        self.toast("Transaksi dikembalikan.");
     }
 
     pub fn ensure_evidence_texture(&mut self, ctx: &egui::Context, key: &str, encoded: &str) {
@@ -656,23 +838,23 @@ impl App {
     fn top_bar(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::TopBottomPanel::top("finflow_top")
-            .exact_height(52.0)
+            .exact_height(56.0)
             .frame(
                 egui::Frame::none()
                     .fill(tc.surface_low)
-                    .stroke(Stroke::new(1.0, tc.border))
-                    .inner_margin(egui::Margin::symmetric(16.0, 10.0)),
+                    .stroke(Stroke::new(1.0_f32, tc.border_soft))
+                    .inner_margin(egui::Margin::symmetric(20.0, 10.0)),
             )
             .show(ctx, |ui| {
                 ui.horizontal_centered(|ui| {
                     if let Some(tex) = &self.logo_tex {
                         ui.add(
                             egui::Image::new(tex)
-                                .fit_to_exact_size(Vec2::splat(28.0))
-                                .rounding(Rounding::same(7.0)),
+                                .fit_to_exact_size(Vec2::splat(26.0))
+                                .rounding(Rounding::same(6.0)),
                         );
                     } else {
-                        let (logo, _) = ui.allocate_exact_size(Vec2::splat(28.0), Sense::hover());
+                        let (logo, _) = ui.allocate_exact_size(Vec2::splat(26.0), Sense::hover());
                         ui.painter().rect_filled(logo, Rounding::same(8.0), tc.primary);
                         ui.painter().text(
                             logo.center(),
@@ -682,12 +864,18 @@ impl App {
                             tc.white,
                         );
                     }
-                    ui.add_space(8.0);
-                    ui.label(egui::RichText::new("FinFlow").size(15.0).color(tc.white).strong());
-                    ui.label(egui::RichText::new("— Keuangan Pribadi").size(10.5).color(tc.muted));
+                    ui.add_space(10.0);
+                    ui.label(egui::RichText::new("FinFlow").size(15.0).color(tc.text).strong());
+                    ui.add_space(6.0);
+                    ui.label(
+                        egui::RichText::new("KEUANGAN PRIBADI")
+                            .size(9.5)
+                            .color(tc.muted_dim)
+                            .strong(),
+                    );
 
-                    ui.add_space(18.0);
-                    let (line, _) = ui.allocate_exact_size(Vec2::new(1.0, 20.0), Sense::hover());
+                    ui.add_space(20.0);
+                    let (line, _) = ui.allocate_exact_size(Vec2::new(1.0, 22.0), Sense::hover());
                     ui.painter().rect_filled(line, Rounding::ZERO, tc.border);
                     ui.add_space(14.0);
 
@@ -703,26 +891,34 @@ impl App {
                     let mut switch_to: Option<String> = None;
                     let mut new_project = false;
                     let mut open_file = false;
-                    egui::ComboBox::from_id_source("project_switcher")
-                        .selected_text(egui::RichText::new(current_title).size(11.5).color(tc.text))
-                        .width(190.0)
-                        .show_ui(ui, |ui| {
-                            for (id, title) in &items {
-                                if ui
-                                    .selectable_label(self.current.as_deref() == Some(id.as_str()), title)
-                                    .clicked()
-                                {
-                                    switch_to = Some(id.clone());
+                    styled_combo_scope(ui, &tc, |ui| {
+                        egui::ComboBox::from_id_source("project_switcher")
+                            .selected_text(
+                                egui::RichText::new(current_title)
+                                    .size(12.0)
+                                    .color(tc.text)
+                                    .strong(),
+                            )
+                            .width(210.0)
+                            .height(34.0)
+                            .show_ui(ui, |ui| {
+                                for (id, title) in &items {
+                                    if ui
+                                        .selectable_label(self.current.as_deref() == Some(id.as_str()), title)
+                                        .clicked()
+                                    {
+                                        switch_to = Some(id.clone());
+                                    }
                                 }
-                            }
-                            ui.separator();
-                            if ui.button("+ Proyek Baru").clicked() {
-                                new_project = true;
-                            }
-                            if ui.button("Buka file .ff...").clicked() {
-                                open_file = true;
-                            }
-                        });
+                                ui.separator();
+                                if ui.button("+ Proyek Baru").clicked() {
+                                    new_project = true;
+                                }
+                                if ui.button("Buka file .ff...").clicked() {
+                                    open_file = true;
+                                }
+                            });
+                    });
                     if let Some(id) = switch_to {
                         self.current = Some(id);
                         self.view = View::Dashboard;
@@ -736,9 +932,22 @@ impl App {
                     }
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let (dot, _) = ui.allocate_exact_size(Vec2::splat(7.0), Sense::hover());
-                        ui.painter().circle_filled(dot.center(), 3.5, tc.income);
-                        ui.label(egui::RichText::new("Penyimpanan Otomatis").size(10.0).color(tc.income));
+                        egui::Frame::none()
+                            .fill(tc.income_soft)
+                            .rounding(Rounding::same(999.0))
+                            .inner_margin(egui::Margin::symmetric(10.0, 5.0))
+                            .show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 7.0;
+                                    let (dot, _) = ui.allocate_exact_size(Vec2::splat(7.0), Sense::hover());
+                                    ui.painter().circle_filled(dot.center(), 3.5, tc.income);
+                                    ui.label(
+                                        egui::RichText::new("Tersimpan otomatis")
+                                            .size(10.0)
+                                            .color(tc.income),
+                                    );
+                                });
+                            });
                     });
                 });
             });
@@ -747,21 +956,21 @@ impl App {
     fn sidebar(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::SidePanel::left("finflow_sidebar")
-            .exact_width(228.0)
+            .exact_width(216.0)
             .resizable(false)
             .frame(
                 egui::Frame::none()
                     .fill(tc.surface_low)
-                    .stroke(Stroke::new(1.0, tc.border))
+                    .stroke(Stroke::new(1.0_f32, tc.border_soft))
                     .inner_margin(egui::Margin::symmetric(14.0, 14.0)),
             )
             .show(ctx, |ui| {
-                overline(ui, "MENU UTAMA", &tc);
-                ui.add_space(6.0);
+                overline(ui, "Menu Utama", &tc);
+                ui.add_space(10.0);
                 if nav_item(ui, Icon::Grid, "Dashboard", self.view == View::Dashboard, &tc).clicked() {
                     self.view = View::Dashboard;
                 }
-                ui.add_space(2.0);
+                ui.add_space(3.0);
                 if nav_item(ui, Icon::Receipt, "Buku Transaksi", self.view == View::Transactions, &tc).clicked() {
                     self.view = View::Transactions;
                     self.page = 0;
@@ -775,11 +984,11 @@ impl App {
                     self.view = View::Analysis;
                 }
 
-                ui.add_space(18.0);
-                divider(ui, &tc);
                 ui.add_space(14.0);
-                overline(ui, "PREFERENSI", &tc);
-                ui.add_space(6.0);
+                divider(ui, &tc);
+                ui.add_space(10.0);
+                overline(ui, "Preferensi", &tc);
+                ui.add_space(8.0);
                 let settings_selected = self.view == View::Settings;
                 let resp = nav_item(ui, Icon::Gear, "Pengaturan", settings_selected, &tc);
                 if resp.clicked() {
@@ -788,8 +997,8 @@ impl App {
                 }
                 // Chevron indicator on the right of the settings entry.
                 let c = egui::Pos2::new(resp.rect.right() - 20.0, resp.rect.center().y);
-                let color = if settings_selected { tc.white } else { tc.muted };
-                let stroke = Stroke::new(1.5, color);
+                let color = if settings_selected { tc.text } else { tc.muted };
+                let stroke = Stroke::new(1.5_f32, color);
                 if self.settings_expanded {
                     ui.painter().line_segment(
                         [egui::Pos2::new(c.x - 4.5, c.y - 2.0), egui::Pos2::new(c.x, c.y + 2.5)],
@@ -816,11 +1025,12 @@ impl App {
                         SettingsSection::Expenses,
                         SettingsSection::Income,
                         SettingsSection::Bills,
+                        SettingsSection::Budget,
                         SettingsSection::Default,
-                        SettingsSection::Theme,
+                        SettingsSection::Privacy,
                     ];
                     ui.scope(|ui| {
-                        ui.spacing_mut().item_spacing.y = 2.0;
+                        ui.spacing_mut().item_spacing.y = 3.0;
                         for section in sections {
                             let active = settings_selected && self.settings_section == section;
                             if sub_nav_item(ui, section.label(), active, &tc).clicked() {
@@ -831,16 +1041,22 @@ impl App {
                     });
                 }
 
-                if ui.available_height() > 60.0 {
+                if ui.available_height() > 70.0 {
                     ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                        ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new("build by Cakra Bisnis").size(10.0).color(tc.muted_dim));
-                        });
-                        ui.add_space(3.0);
-                        ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new("License for Personal use").size(9.0).color(tc.muted_dim));
-                        });
                         ui.add_space(4.0);
+                        ui.label(
+                            egui::RichText::new("Penggunaan pribadi")
+                                .size(9.5)
+                                .color(tc.muted_dim),
+                        );
+                        ui.label(
+                            egui::RichText::new("by Cakra Bisnis")
+                                .size(10.0)
+                                .color(tc.muted),
+                        );
+                        ui.add_space(8.0);
+                        divider(ui, &tc);
+                        ui.add_space(8.0);
                     });
                 }
             });
@@ -849,7 +1065,7 @@ impl App {
     fn central(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
         egui::CentralPanel::default()
-            .frame(egui::Frame::none().fill(tc.bg).inner_margin(egui::Margin::symmetric(24.0, 16.0)))
+            .frame(egui::Frame::none().fill(tc.bg).inner_margin(egui::Margin::symmetric(28.0, 20.0)))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
@@ -861,37 +1077,67 @@ impl App {
                             View::Analysis => self.analysis(ui),
                             View::Settings => self.settings(ui),
                         }
-                        ui.add_space(18.0);
+                        ui.add_space(24.0);
                     });
             });
     }
 
     fn show_toast(&mut self, ctx: &egui::Context) {
         let tc = self.theme_colors;
-        let Some((message, created)) = self.toast_message.clone() else {
+        let Some(toast) = self.toast_message.clone() else {
             return;
         };
-        if created.elapsed() > Duration::from_secs(4) {
+        let timeout = if toast.undo.is_some() { 6 } else { 4 };
+        if toast.created.elapsed() > Duration::from_secs(timeout) {
             self.toast_message = None;
             return;
         }
+        let mut undo_clicked = false;
         egui::Area::new(egui::Id::new("finflow_toast"))
             .order(egui::Order::Foreground)
             .anchor(egui::Align2::RIGHT_BOTTOM, Vec2::new(-22.0, -22.0))
             .show(ctx, |ui| {
                 egui::Frame::none()
                     .fill(tc.surface_high)
-                    .rounding(Rounding::same(10.0))
+                    .rounding(Rounding::same(12.0))
                     .stroke(Stroke::new(1.0_f32, tc.border))
-                    .inner_margin(egui::Margin::symmetric(14.0, 10.0))
+                    .shadow(egui::epaint::Shadow {
+                        offset: egui::vec2(0.0, 8.0),
+                        blur: 24.0,
+                        spread: -6.0,
+                        color: Color32::from_black_alpha(70),
+                    })
+                    .inner_margin(egui::Margin::symmetric(16.0, 11.0))
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             let (rect, _) = ui.allocate_exact_size(Vec2::splat(14.0), Sense::hover());
                             paint_icon(ui.painter(), rect, tc.income, Icon::Check, 1.4);
-                            ui.label(egui::RichText::new(message).size(11.0).color(tc.text));
+                            ui.label(egui::RichText::new(toast.message).size(11.0).color(tc.text));
+                            if toast.undo.is_some() {
+                                ui.add_space(8.0);
+                                if ui
+                                    .add(
+                                        egui::Button::new(
+                                            egui::RichText::new("Urungkan")
+                                                .size(10.5)
+                                                .color(tc.primary_light)
+                                                .strong(),
+                                        )
+                                        .fill(tc.primary_soft)
+                                        .rounding(Rounding::same(8.0))
+                                        .min_size(Vec2::new(0.0, 26.0)),
+                                    )
+                                    .clicked()
+                                {
+                                    undo_clicked = true;
+                                }
+                            }
                         });
                     });
             });
+        if undo_clicked {
+            self.undo_delete();
+        }
         ctx.request_repaint_after(Duration::from_millis(250));
     }
 }
@@ -911,7 +1157,6 @@ impl eframe::App for App {
             self.toast("Proyek disimpan.");
         }
         if new_tx && self.current.is_some() {
-            self.form.reset_entry(TxKind::Income);
             self.open_modal(Modal::AddTransaction);
         }
         if export && self.current.is_some() {
@@ -920,8 +1165,6 @@ impl eframe::App for App {
         if escape && self.modal != Modal::None {
             self.close_modal();
         }
-
-        self.check_theme_change(ctx);
 
         self.top_bar(ctx);
         self.sidebar(ctx);
@@ -1009,8 +1252,6 @@ fn update_notice() -> Option<String> {
 }
 
 fn main() -> eframe::Result<()> {
-    spawn_auto_updater();
-
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1280.0, 720.0])

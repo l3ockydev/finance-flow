@@ -58,37 +58,38 @@ pub fn widths(avail: f32, actions: bool) -> Cols {
 pub fn table_header(ui: &mut egui::Ui, cols: &Cols, actions: bool, tc: &ThemeColors) {
     ui.add_space(2.0);
     let status_w = if actions { 0.0 } else { 88.0 };
-    let row_h = 20.0;
+    let row_h = 26.0;
     let total_w = 34.0 + cols.desc + 140.0 + 100.0 + status_w + 132.0 + if actions { 76.0 } else { 0.0 };
     let (row_rect, _) = ui.allocate_exact_size(Vec2::new(total_w, row_h), egui::Sense::hover());
     let painter = ui.painter();
+    painter.rect_filled(row_rect, Rounding::same(8.0), tc.surface_low);
     let mut x = row_rect.left() + 34.0;
     
     // DESKRIPSI & REKENING
     let rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(cols.desc, row_h));
-    painter.text(rect.left_top() + Vec2::new(0.0, 2.0), egui::Align2::LEFT_TOP, "DESKRIPSI & REKENING", FontId::proportional(10.5), tc.muted);
+    painter.text(rect.left_top() + Vec2::new(0.0, 7.0), egui::Align2::LEFT_TOP, "DESKRIPSI & REKENING", FontId::proportional(10.0), tc.muted_dim);
     x += cols.desc;
     
     // KATEGORI
     let rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(140.0, row_h));
-    painter.text(rect.left_top() + Vec2::new(0.0, 2.0), egui::Align2::LEFT_TOP, "KATEGORI", FontId::proportional(10.5), tc.muted);
+    painter.text(rect.left_top() + Vec2::new(0.0, 7.0), egui::Align2::LEFT_TOP, "KATEGORI", FontId::proportional(10.0), tc.muted_dim);
     x += 140.0;
     
     // TANGGAL
     let rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(100.0, row_h));
-    painter.text(rect.left_top() + Vec2::new(0.0, 2.0), egui::Align2::LEFT_TOP, "TANGGAL", FontId::proportional(10.5), tc.muted);
+    painter.text(rect.left_top() + Vec2::new(0.0, 7.0), egui::Align2::LEFT_TOP, "TANGGAL", FontId::proportional(10.0), tc.muted_dim);
     x += 100.0;
     
     // STATUS (only when not actions)
     if !actions {
         let rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(status_w, row_h));
-        painter.text(rect.left_top() + Vec2::new(0.0, 2.0), egui::Align2::LEFT_TOP, "STATUS", FontId::proportional(10.5), tc.muted);
+        painter.text(rect.left_top() + Vec2::new(0.0, 7.0), egui::Align2::LEFT_TOP, "STATUS", FontId::proportional(10.0), tc.muted_dim);
         x += status_w;
     }
     
     // NOMINAL (right-aligned)
     let rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(132.0, row_h));
-    painter.text(rect.right_top() + Vec2::new(0.0, 2.0), egui::Align2::RIGHT_TOP, "NOMINAL", FontId::proportional(10.5), tc.muted);
+    painter.text(rect.right_top() + Vec2::new(0.0, 7.0), egui::Align2::RIGHT_TOP, "NOMINAL", FontId::proportional(10.0), tc.muted_dim);
     
     ui.add_space(2.0);
     divider(ui, tc);
@@ -96,16 +97,16 @@ pub fn table_header(ui: &mut egui::Ui, cols: &Cols, actions: bool, tc: &ThemeCol
 
 pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, tc: &ThemeColors) -> RowAction {
     let mut action = RowAction::None;
-    let row_h = 48.0;
+    let row_h = 52.0;
     let status_w = if actions { 0.0 } else { 88.0 };
     let total_w = 34.0 + cols.desc + 140.0 + 100.0 + status_w + 132.0 + if actions { 76.0 } else { 0.0 };
     let (row_rect, row_resp) = ui.allocate_exact_size(Vec2::new(total_w, row_h), egui::Sense::click());
     let painter = ui.painter();
     if row_resp.hovered() {
         painter.rect_filled(
-            row_rect.shrink2(Vec2::new(4.0, 2.0)),
-            Rounding::same(8.0),
-            tc.surface_low,
+            row_rect.shrink2(Vec2::new(2.0, 2.0)),
+            Rounding::same(10.0),
+            tc.surface_high,
         );
     }
     let mut x = row_rect.left() + 34.0;
@@ -113,30 +114,30 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     // ICON column (34px)
     let icon_rect = Rect::from_min_size(Pos2::new(row_rect.left(), row_rect.top()), Vec2::new(34.0, row_h));
     let tint = category_color(&tx.category, tc);
-    painter.rect_filled(icon_rect, Rounding::same(9.0), category_bg(&tx.category, tc));
+    painter.rect_filled(icon_rect, Rounding::same(10.0), category_bg(&tx.category, tc));
     paint_icon(painter, icon_rect.shrink(9.0), tint, category_icon(&tx.category), 1.5);
     
     // DESKRIPSI & REKENING
     let desc_rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(cols.desc, row_h));
     // Note text
-    let note_galley = painter.layout_no_wrap(tx.note.clone(), FontId::proportional(12.0), tc.white);
+    let note_galley = painter.layout_no_wrap(tx.note.clone(), FontId::proportional(12.5), tc.text);
     let note_x = desc_rect.left() + 2.0;
-    let note_y = desc_rect.top() + 4.0;
+    let note_y = desc_rect.top() + 6.0;
     let note_rect = Rect::from_min_size(Pos2::new(note_x, note_y), note_galley.size());
     let note_resp = ui.interact(note_rect, ui.id().with(tx.id.as_str()).with("note"), egui::Sense::click());
     if note_resp.clicked() {
         action = RowAction::Open(tx.id.clone());
     }
-    painter.galley(Pos2::new(note_x, note_y), note_galley, tc.white);
+    painter.galley(Pos2::new(note_x, note_y), note_galley, tc.text);
     // Account/sub text
     let sub = if tx.image.is_some() {
         format!("{}  •  Bukti terlampir", tx.account)
     } else {
         tx.account.clone()
     };
-    let sub_galley = painter.layout_no_wrap(sub, FontId::proportional(10.0), tc.muted);
+    let sub_galley = painter.layout_no_wrap(sub, FontId::proportional(10.5), tc.muted);
     let sub_x = desc_rect.left() + 2.0;
-    let sub_y = desc_rect.top() + 22.0;
+    let sub_y = desc_rect.top() + 26.0;
     painter.galley(Pos2::new(sub_x, sub_y), sub_galley, tc.muted);
     x += cols.desc;
     
@@ -144,19 +145,19 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     let cat_rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(140.0, row_h));
     let cat_center = cat_rect.center();
     let pill_w = 130.0_f32.min(cat_rect.width() - 8.0);
-    let pill_h = 20.0;
+    let pill_h = 22.0;
     let pill_rect = Rect::from_center_size(Pos2::new(cat_center.x, cat_center.y), Vec2::new(pill_w, pill_h));
     painter.rect_filled(pill_rect, Rounding::same(999.0), category_bg(&tx.category, tc));
-    let cat_galley = painter.layout_no_wrap(tx.category.clone(), FontId::proportional(10.5), category_color(&tx.category, tc));
+    let cat_galley = painter.layout_no_wrap(tx.category.clone(), FontId::proportional(11.0), category_color(&tx.category, tc));
     painter.galley(pill_rect.center() - cat_galley.size() / 2.0, cat_galley, category_color(&tx.category, tc));
     x += 140.0;
     
     // TANGGAL
     let date_rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(100.0, row_h));
     let date_galley = painter.layout_no_wrap(format_date_short(&tx.date), FontId::proportional(10.5), tc.text);
-    let time_galley = painter.layout_no_wrap(format!("{} WIB", tx.time), FontId::proportional(10.5), tc.muted);
-    painter.galley(Pos2::new(date_rect.left() + 2.0, date_rect.top() + 6.0), date_galley, tc.text);
-    painter.galley(Pos2::new(date_rect.left() + 2.0, date_rect.top() + 24.0), time_galley, tc.muted);
+    let time_galley = painter.layout_no_wrap(format!("{} WIB", tx.time), FontId::proportional(10.0), tc.muted_dim);
+    painter.galley(Pos2::new(date_rect.left() + 2.0, date_rect.top() + 8.0), date_galley, tc.text);
+    painter.galley(Pos2::new(date_rect.left() + 2.0, date_rect.top() + 27.0), time_galley, tc.muted);
     x += 100.0;
     
     // STATUS (only when not actions)
@@ -173,7 +174,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     // NOMINAL (right-aligned)
     let nominal_rect = Rect::from_min_size(Pos2::new(x, row_rect.top()), Vec2::new(132.0, row_h));
     let color = if tx.kind == TxKind::Income { tc.income } else { tc.expense };
-    let amt_galley = painter.layout_no_wrap(format_signed(tx.kind, tx.amount), FontId::proportional(12.0), color);
+    let amt_galley = painter.layout_no_wrap(format_signed(tx.kind, tx.amount), FontId::proportional(13.0), color);
     painter.galley(Pos2::new(nominal_rect.right() - amt_galley.size().x, nominal_rect.center().y - amt_galley.size().y / 2.0), amt_galley, color);
     
     // ACTIONS (Edit/Delete buttons)
@@ -185,7 +186,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
         if edit_resp.hovered() {
             painter.rect_filled(edit_rect, Rounding::same(7.0), tc.surface_high);
         }
-        paint_icon(painter, edit_rect.shrink(9.0), if edit_resp.hovered() { tc.white } else { tc.muted }, Icon::Edit, 1.5);
+        paint_icon(painter, edit_rect.shrink(9.0), if edit_resp.hovered() { tc.text } else { tc.muted }, Icon::Edit, 1.5);
         if edit_resp.clicked() {
             action = RowAction::Edit(tx.id.clone());
         }
@@ -209,7 +210,7 @@ pub fn tx_row(ui: &mut egui::Ui, tx: &Transaction, cols: &Cols, actions: bool, t
     // Divider
     painter.line_segment(
         [Pos2::new(row_rect.left(), row_rect.bottom()), Pos2::new(row_rect.right(), row_rect.bottom())],
-        Stroke::new(1.0, tc.border),
+        Stroke::new(1.0_f32, tc.border_soft),
     );
     
     action
@@ -226,21 +227,18 @@ impl App {
 
         ui.horizontal(|ui| {
             ui.vertical(|ui| {
-                title(ui, "Dashboard", &tc);
-                ui.add_space(2.0);
-                label(ui, "Ringkasan keuangan proyek Anda bulan ini.", 11.5, tc.muted);
+                page_heading(ui, "Ringkasan", "Dashboard", &tc);
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if primary_button(ui, "+ Tambah Transaksi", &tc).clicked() {
-                    self.form.reset_entry(TxKind::Income);
                     self.open_modal(Modal::AddTransaction);
                 }
             });
         });
 
-        ui.add_space(16.0);
+        ui.add_space(12.0);
 
-        let gap = 14.0;
+        let gap = 12.0;
         let width = ((ui.available_width() - gap * 3.0) / 4.0).floor().max(160.0);
         let (income, expense) = p.this_month_totals();
         let budget_total: f64 = p.budgets.iter().map(|b| b.limit).sum();
@@ -260,7 +258,7 @@ impl App {
             Metric {
                 label: "SALDO SAAT INI",
                 value: &balance_txt,
-                accent: tc.white,
+                accent: tc.text,
                 icon: Icon::Wallet,
                 icon_fg: tc.primary_light,
                 icon_bg: tc.primary_soft,
@@ -296,7 +294,7 @@ impl App {
             Metric {
                 label: "TAGIHAN MENUNGGU BAYAR",
                 value: &pending_txt,
-                accent: tc.white,
+                accent: tc.text,
                 icon: Icon::Bell,
                 icon_fg: tc.warning,
                 icon_bg: tc.warning_soft,
@@ -314,37 +312,37 @@ impl App {
                     ui.add_space(gap);
                 }
                 ui.allocate_ui_with_layout(
-                    Vec2::new(width, 148.0),
+                    Vec2::new(width, 144.0),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| metric_card(ui, metric, &tc),
                 );
             }
         });
 
-        ui.add_space(18.0);
+        ui.add_space(14.0);
 
         let total_w = ui.available_width();
-        let left_w = ((total_w - 16.0) * 0.635).floor();
-        let right_w = total_w - left_w - 16.0;
+        let left_w = ((total_w - 14.0) * 0.635).floor();
+        let right_w = total_w - left_w - 14.0;
         ui.horizontal_top(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            ui.allocate_ui_with_layout(Vec2::new(left_w, 340.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.allocate_ui_with_layout(Vec2::new(left_w, 312.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 self.cashflow_card(ui, &p);
             });
-            ui.add_space(16.0);
-            ui.allocate_ui_with_layout(Vec2::new(right_w, 340.0), egui::Layout::top_down(egui::Align::Min), |ui| {
+            ui.add_space(14.0);
+            ui.allocate_ui_with_layout(Vec2::new(right_w, 312.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                 self.upcoming_bills_card(ui, &p);
             });
         });
 
-        ui.add_space(18.0);
+        ui.add_space(14.0);
 
         let tc = self.theme_colors;
         card(ui, |ui| {
             ui.horizontal(|ui| {
                 section_title(ui, "Transaksi Terbaru", "", &tc);
                 ui.add_space(4.0);
-                pill(ui, "5 Data Terkini", tc.muted, Color32::from_rgba_premultiplied(0x0c, 0x0c, 0x0c, 0x0c));
+                pill(ui, "5 Data Terkini", tc.muted, tc.surface_high);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if secondary_button(ui, "Ekspor", &tc).clicked() {
                         self.open_modal(Modal::Export);
@@ -416,12 +414,12 @@ impl App {
                 let y = base_y - chart_h * i as f32 / 3.0;
                 painter.line_segment(
                     [Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)],
-                    Stroke::new(1.0, Color32::from_rgba_premultiplied(0x0a, 0x0a, 0x0a, 0x0a)),
+                    Stroke::new(1.0_f32, tc.border_soft),
                 );
             }
             painter.line_segment(
                 [Pos2::new(rect.left(), base_y), Pos2::new(rect.right(), base_y)],
-                Stroke::new(1.0, tc.border),
+                Stroke::new(1.0_f32, tc.border),
             );
 
             let group_w = rect.width() / months.len() as f32;
